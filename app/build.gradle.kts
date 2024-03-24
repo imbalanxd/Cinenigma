@@ -1,12 +1,20 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
+    alias(libs.plugins.hilt)
+    id("com.google.devtools.ksp")
 }
 
 android {
     namespace = "com.imbaland.cinenigma"
     compileSdk = 34
 
+    buildFeatures {
+        compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.10"
+    }
     defaultConfig {
         applicationId = "com.imbaland.cinenigma"
         minSdk = 24
@@ -27,15 +35,34 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
 }
 
 dependencies {
+    implementation(project(":movies"))
+    implementation(project(":common"))
+
+    api(platform(libs.androidx.compose.bom))
+    api(libs.androidx.compose.foundation)
+    api(libs.androidx.compose.foundation.layout)
+    api(libs.androidx.compose.material.iconsExtended)
+    api(libs.androidx.compose.material3)
+    api(libs.androidx.compose.runtime)
+    api(libs.androidx.compose.ui.tooling.preview)
+    api(libs.androidx.compose.ui.util)
+    api(libs.androidx.core.splashscreen)
+    api(libs.androidx.lifecycle.viewModelCompose)
+    api(libs.androidx.activity.compose)
+    api(libs.androidx.activity.ktx)
+
+    debugApi(libs.androidx.compose.ui.tooling)
+
+    implementation(libs.coil.kt.compose)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -47,6 +74,12 @@ dependencies {
     implementation(libs.squareup.retrofit.moshi)
     implementation(libs.squareup.okhttp3)
     implementation(libs.squareup.okhttp3.logginginterceptor)
+
+
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.hilt.android.testing)
+    ksp(libs.hilt.ext.compiler)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
