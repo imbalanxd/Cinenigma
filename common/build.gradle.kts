@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.jetbrainsKotlinAndroid)
+    alias(libs.plugins.imbaland.android.library.compose)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -45,6 +47,7 @@ dependencies {
     implementation(libs.squareup.moshi.adapters)
     implementation(libs.squareup.okhttp3)
     implementation(libs.squareup.okhttp3.logginginterceptor)
+    implementation (libs.google.mlkit.text)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

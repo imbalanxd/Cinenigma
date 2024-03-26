@@ -1,9 +1,9 @@
 package com.imbaland.movies.domain.model
 
 abstract class Media(
-    val media_type: String,
-    open val id: Int,
-    open val popularity: Double,
 ) {
-
+    abstract val media_type: String
+    abstract val image: String
+    abstract val id: Int
+    abstract  val popularity: Double
 }

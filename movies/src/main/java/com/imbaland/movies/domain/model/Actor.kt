@@ -9,5 +9,7 @@ data class Actor(
     val name: String,
     val original_name: String,
     override val popularity: Double,
-    val profile_path: String
-): Media(id = id, popularity = popularity, media_type = "person")
+    val profile_path: String,
+    override val media_type: String = "person",
+    override val image: String = "https://image.tmdb.org/t/p/w500$profile_path"
+): Media()

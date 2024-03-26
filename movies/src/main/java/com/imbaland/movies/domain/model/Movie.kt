@@ -14,5 +14,7 @@ data class Movie(
     val title: String,
     val video: Boolean,
     val vote_average: Double,
-    val vote_count: Int
-): Media(id = id, popularity = popularity, media_type = "movie")
+    val vote_count: Int,
+    override val media_type: String = "movie",
+    override val image: String = "https://image.tmdb.org/t/p/w500$poster_path"
+): Media()
