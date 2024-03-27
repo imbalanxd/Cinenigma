@@ -1,11 +1,11 @@
 package com.imbaland.movies.data.remote
 
 import android.content.Context
-import com.imbaland.common.data.remote.RemoteService
+import com.imbaland.common.data.remote.RemoteApiService
 import com.imbaland.movies.BuildConfig
 import retrofit2.Retrofit
 
-class MoviesRemoteService: RemoteService<MoviesApi>() {
+class MoviesRemoteService: RemoteApiService<MoviesApi>() {
     override val baseUrl: String
         get() = "https://api.themoviedb.org/3/"
     val api: MoviesApi

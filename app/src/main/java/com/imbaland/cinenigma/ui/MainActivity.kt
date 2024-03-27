@@ -53,6 +53,8 @@ class MainActivity : ComponentActivity() {
             when (uiState) {
                 MainActivityUiState.Loading -> true
                 is MainActivityUiState.Success -> false
+                MainActivityUiState.Authenticated -> false
+                MainActivityUiState.Error -> false
             }
         }
 
@@ -79,7 +81,6 @@ class MainActivity : ComponentActivity() {
             ConstraintLayout (modifier = Modifier.fillMaxSize()) {
                 val (tapDrag) = createRefs()
                 when(uiState) {
-                    is MainActivityUiState.Loading -> {}
                     is MainActivityUiState.Success -> {
                         MoviePoster(modifier = Modifier
                             .fillMaxWidth(0.7f)
@@ -89,6 +90,9 @@ class MainActivity : ComponentActivity() {
                                 start.linkTo(parent.start)
                                 end.linkTo(parent.end)
                             }, imageUrl = (uiState as MainActivityUiState.Success).movie.image)
+                    }
+                    else -> {
+
                     }
                 }
             }

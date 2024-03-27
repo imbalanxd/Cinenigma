@@ -4,10 +4,8 @@ import android.content.Context
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import android.util.Log
 import com.imbaland.common.data.local.SecureSharedPreferences
 import com.imbaland.common.data.utils.MoshiUtils
-import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -16,7 +14,7 @@ import java.io.IOException
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-abstract class RemoteService<Api: Any>() {
+abstract class RemoteApiService<Api: Any>() {
     abstract val baseUrl: String
     private val headerValues: HashMap<String, String> = HashMap()
     protected lateinit var apiService: Api

@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.hilt)
     alias(libs.plugins.imbaland.android.application.compose)
+    alias(libs.plugins.google.services)
     id("com.google.devtools.ksp")
 }
 
