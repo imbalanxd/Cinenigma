@@ -2,17 +2,15 @@ package com.imbaland.movies.di
 
 import android.app.Application
 import android.content.Context
+import com.imbaland.movies.data.remote.CinenigmaFirestore
 import com.imbaland.movies.data.remote.MoviesRemoteService
 import com.imbaland.movies.data.repository.MoviesRepositoryImpl
 import com.imbaland.movies.domain.repository.MoviesRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.launch
 import javax.inject.Singleton
 
 @Module
@@ -23,6 +21,11 @@ class MoviesModule() {
         moviesRemoteService: MoviesRemoteService,
     ): MoviesRepository {
         return MoviesRepositoryImpl(moviesRemoteService)
+    }
+    @Provides
+    internal fun bindsCinenigmaFirestore(
+    ): CinenigmaFirestore {
+        return CinenigmaFirestore()
     }
     @Singleton
     @Provides

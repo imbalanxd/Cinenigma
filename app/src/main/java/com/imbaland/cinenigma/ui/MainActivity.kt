@@ -17,7 +17,8 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.imbaland.cinenigma.ui.widget.MoviePoster
+import com.imbaland.common.domain.database.DatabaseService
+import com.imbaland.movies.ui.widget.MoviePoster
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
@@ -31,7 +32,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
-
         var uiState: MainActivityUiState by mutableStateOf(MainActivityUiState.Loading)
 
         // Update the uiState
@@ -54,7 +54,7 @@ class MainActivity : ComponentActivity() {
                 MainActivityUiState.Loading -> true
                 is MainActivityUiState.Success -> false
                 MainActivityUiState.Authenticated -> false
-                MainActivityUiState.Error -> false
+                is MainActivityUiState.ErrorState -> false
             }
         }
 
@@ -97,6 +97,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+        var d: DatabaseService? = null
+        lifecycleScope.launch {
+//            val derp = d?.readData<String>()
+        }
+
     }
 
     /**

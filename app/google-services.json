@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "860868889557",
+    "project_id": "cinenigma-33aff",
+    "storage_bucket": "cinenigma-33aff.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:860868889557:android:6ed3911a12a02db1d4cb5c",
+        "android_client_info": {
+          "package_name": "com.imbaland.cinenigma"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD4oShrflWKgKbpVlCFYPLQTWIPEvg0Fbs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,5 +1,8 @@
 package com.imbaland.common.domain.auth
 
+import com.imbaland.common.domain.Error
+import com.imbaland.common.domain.Result
+
 interface Authenticator {
     val isAuthenticated: Boolean
     val account:AuthenticatedUser?
@@ -18,8 +21,3 @@ enum class AuthenticationError: Error {
     GENERAL_ERROR,
     NULL_USER
 }
-
-//sealed class AuthenticationResult: Result<AuthenticatedUser, > {
-//    data class Success(val user: AuthenticatedUser)
-//    sealed class GeneralError()
-//}

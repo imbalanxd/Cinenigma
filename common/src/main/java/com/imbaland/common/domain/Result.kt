@@ -1,4 +1,4 @@
-package com.imbaland.common.domain.auth
+package com.imbaland.common.domain
 
 typealias RootError = Error
 sealed interface Result<out Data, out Error: RootError> {
@@ -6,4 +6,4 @@ sealed interface Result<out Data, out Error: RootError> {
     data class Error<out Data, out Error: RootError>(val error: Error): Result<Data, Error>
 }
 
-sealed interface Error
+interface Error

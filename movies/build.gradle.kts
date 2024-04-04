@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.imbaland.android.library.compose)
     id("com.google.devtools.ksp")
 }
 
@@ -20,7 +21,7 @@ android {
         buildConfig = true
     }
     defaultConfig {
-        minSdk = 24
+        minSdk = 26
         buildConfigField("String", "TMDB_KEY", "${keys["TMDB_KEY"]}")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")

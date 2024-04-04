@@ -1,11 +1,9 @@
-package com.imbaland.cinenigma.ui.widget
+package com.imbaland.movies.ui.widget
 
 import android.graphics.Rect
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -15,7 +13,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toAndroidRectF
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
@@ -23,7 +20,6 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.times
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
-import com.imbaland.cinenigma.ui.MainActivityUiState
 import com.imbaland.common.tool.TextVisionFinder
 import com.imbaland.common.ui.shader.pixelate
 import com.imbaland.common.ui.widget.TapDrag
