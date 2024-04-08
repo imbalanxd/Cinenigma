@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.imbaland.android.library.compose)
     alias(libs.plugins.google.services)
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -41,6 +42,10 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.security.crypto)
 
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.hilt.android.testing)
+    ksp(libs.hilt.ext.compiler)
     implementation(libs.squareup.retrofit)
     implementation(libs.squareup.retrofit.moshi)
     implementation(libs.squareup.moshi.kotlin)

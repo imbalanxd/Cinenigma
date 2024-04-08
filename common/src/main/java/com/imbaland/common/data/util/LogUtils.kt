@@ -1,4 +1,4 @@
-package com.imbaland.common.data.utils
+package com.imbaland.common.data.util
 
 import android.util.Log
 

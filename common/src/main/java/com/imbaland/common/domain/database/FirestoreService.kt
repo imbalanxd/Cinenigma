@@ -11,5 +11,6 @@ interface FirestoreService {
 
 enum class FirestoreError: Error {
     GENERAL_ERROR,
+    EMPTY,
     NOT_FOUND
 }

@@ -19,7 +19,6 @@ android {
     }
     defaultConfig {
         applicationId = "com.imbaland.cinenigma"
-        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -49,14 +48,6 @@ dependencies {
     implementation(project(":movies"))
     implementation(project(":common"))
 
-    api(platform(libs.androidx.compose.bom))
-    api(libs.androidx.compose.foundation)
-    api(libs.androidx.compose.foundation.layout)
-    api(libs.androidx.compose.material.iconsExtended)
-    api(libs.androidx.compose.material3)
-    api(libs.androidx.compose.runtime)
-    api(libs.androidx.compose.ui.tooling.preview)
-    api(libs.androidx.compose.ui.util)
     api(libs.androidx.core.splashscreen)
     api(libs.androidx.lifecycle.viewModelCompose)
     api(libs.androidx.activity.compose)

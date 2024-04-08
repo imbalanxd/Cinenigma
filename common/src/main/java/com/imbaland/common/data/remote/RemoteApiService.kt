@@ -5,7 +5,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import com.imbaland.common.data.local.SecureSharedPreferences
-import com.imbaland.common.data.utils.MoshiUtils
+import com.imbaland.common.data.util.MoshiUtils
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor

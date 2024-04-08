@@ -10,6 +10,9 @@ internal fun Project.configureAndroidCompose(
     commonExtension: CommonExtension<*, *, *, *, *>,
 ) {
     commonExtension.apply {
+        defaultConfig {
+            minSdk = 33
+        }
         buildFeatures {
             compose = true
         }
@@ -31,7 +34,10 @@ internal fun Project.configureAndroidCompose(
             add("implementation", libs.findLibrary("coil-kt-compose").get())
             add("implementation", libs.findLibrary("coil-kt").get())
             add("implementation", libs.findLibrary("coil-kt-svg").get())
-            add("implementation", libs.findLibrary("androidx.graphics.shapes").get())
+            add("implementation", libs.findLibrary("androidx-graphics-shapes").get())
+            add("implementation", libs.findLibrary("androidx-compose-navigation").get())
+            add("implementation", libs.findLibrary("androidx-hilt-navigation-compose").get())
+            add("implementation", libs.findLibrary("androidx-lifecycle-runtime-compose").get())
         }
 
         testOptions {

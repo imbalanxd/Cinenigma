@@ -1,6 +1,7 @@
 package com.imbaland.common.data.database.firebase
 
 import com.google.firebase.Firebase
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.firestore
 import com.imbaland.common.domain.Result
@@ -8,12 +9,17 @@ import com.imbaland.common.domain.database.DatabaseError
 import com.imbaland.common.domain.database.FirestoreError
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
 
-abstract class FirestoreServiceImpl(val dispatcher: CoroutineDispatcher = Dispatchers.IO) {
-     val db = Firebase.firestore
+abstract class FirestoreServiceImpl(
+    val dispatcher: CoroutineDispatcher = Dispatchers.IO) {
+
+    val db: FirebaseFirestore = Firebase.firestore
     suspend fun <T: Any>writeDocument(
         collection: String,
         document: String?,
@@ -35,7 +41,7 @@ abstract class FirestoreServiceImpl(val dispatcher: CoroutineDispatcher = Dispat
         }
     }
 
-    suspend inline fun <reified T> readDocument(
+    protected suspend inline fun <reified T> readDocument(
         collection: String,
         document: String
     ): Result<T, FirestoreError> = withContext(dispatcher) {
@@ -53,6 +59,51 @@ abstract class FirestoreServiceImpl(val dispatcher: CoroutineDispatcher = Dispat
                 }
         }
     }
+    suspend inline fun <reified T> watchDocument(
+        collection: String,
+        document: String
+    ): Flow<Result<T?, FirestoreError>> =
+        withContext(dispatcher) {
+            callbackFlow {
+                val docRef = db.collection(collection).document(document)
+                val listener = docRef.addSnapshotListener { collection, _ ->
+                    if (collection == null) {
+                        trySend(Result.Error(FirestoreError.EMPTY))
+                    }
+                    else {
+                        try {
+                            trySend(Result.Success(collection.toObject(T::class.java)))
+                        } catch (e: Throwable) {
+                            trySend(Result.Error(FirestoreError.GENERAL_ERROR))
+                            close(null)
+                        }
+                    }
+                }
+                awaitClose { listener.remove() }
+            }
+        }
+
+    suspend inline fun <reified T> watchCollection(collection: String): Flow<Result<List<T>, FirestoreError>> =
+        withContext(dispatcher) {
+            callbackFlow {
+                val docRef = db.collection(collection)
+                val listener = docRef.addSnapshotListener { collection, _ ->
+                    if (collection == null) {
+                        trySend(Result.Error(FirestoreError.EMPTY))
+                    }
+                    else {
+                        try {
+                            trySend(Result.Success(collection.toObjects(T::class.java)))
+                        } catch (e: Throwable) {
+                            trySend(Result.Error(FirestoreError.GENERAL_ERROR))
+                            close(null)
+                        }
+                    }
+                }
+                awaitClose { listener.remove() }
+            }
+        }
+
 
     suspend inline fun <reified T> readCollection(collection: String): Result<List<T>, FirestoreError> =
         withContext(dispatcher) {

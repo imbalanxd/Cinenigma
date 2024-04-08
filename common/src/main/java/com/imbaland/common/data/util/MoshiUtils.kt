@@ -1,4 +1,4 @@
-package com.imbaland.common.data.utils
+package com.imbaland.common.data.util
 
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapters.Rfc3339DateJsonAdapter

@@ -35,17 +35,6 @@ class FirebaseAuthenticator(
                 Result.Success(currentUser)
             }
         }
-//        val deferred = CompletableDeferred<Result<FirebaseUser, AuthenticationError>>()
-//        firebaseAuth.signInAnonymously().addOnCompleteListener {
-//            it.result.user?.let { user ->
-//                deferred.complete(Result.Success(FirebaseUser(user)))
-//            } ?: deferred.complete(Result.Error(AuthenticationError.NULL_USER))
-//        }.addOnFailureListener { error ->
-//            when(error) {
-//                else -> deferred.complete(Result.Error(AuthenticationError.GENERAL_ERROR))
-//            }
-//        }
-//        deferred.await()
         suspendCancellableCoroutine { cont ->
             firebaseAuth.signInAnonymously().addOnCompleteListener {
                 it.result.user?.let { user ->
