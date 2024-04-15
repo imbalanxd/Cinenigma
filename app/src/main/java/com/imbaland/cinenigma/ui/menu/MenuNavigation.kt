@@ -3,7 +3,7 @@ package com.imbaland.cinenigma.ui.menu
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.navigation
-import com.imbaland.cinenigma.ui.game.IN_GAME_ROUTE
+import com.imbaland.cinenigma.ui.game.GAME_GRAPH
 
 const val MENU_GRAPH = "menu"
 const val LANDING_ROUTE = "landing"
@@ -22,9 +22,8 @@ fun NavGraphBuilder.menuNavigationGraph(
         settingsRoute(SETTINGS_ROUTE)
     }
 }
-
-fun NavController.navigateToPlay(gameId: String) {
-    navigate("$IN_GAME_ROUTE/${gameId}")
+fun NavController.navigateToPlay(gameName: String, gameId: String?) {
+    navigate(GAME_GRAPH(gameName, gameId))
 }
 fun NavController.navigateToLobbies() {
     navigate(LOBBIES_ROUTE)

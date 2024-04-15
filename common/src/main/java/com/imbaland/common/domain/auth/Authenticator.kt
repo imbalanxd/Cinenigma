@@ -12,9 +12,7 @@ interface Authenticator {
      suspend fun logout(): Result<Unit, AuthenticationError>
  }
 
-interface AuthenticatedUser {
-    val id: String
-    val name: String
+open class AuthenticatedUser(val id: String = "", val name: String = "") {
 }
 
 enum class AuthenticationError: Error {

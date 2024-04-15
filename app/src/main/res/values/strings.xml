@@ -6,4 +6,7 @@
     <string name="menu_quit">Quit</string>
     <string name="lobby_joined">Player Joined!</string>
     <string name="lobby_left">Player Left</string>
+
+<!--    <string name="lobby_left">Player Left</string>-->
+<!--    <string name="lobby_left">Player Left</string>-->
 </resources>

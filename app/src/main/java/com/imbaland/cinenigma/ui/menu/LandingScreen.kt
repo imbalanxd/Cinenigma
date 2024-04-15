@@ -41,7 +41,7 @@ fun NavGraphBuilder.landingRoute(route: String, navController: NavController) {
 @Composable
 fun LandingScreen(
     viewModel: MenuViewModel,
-    onPlayClicked: (String) -> Unit,
+    onPlayClicked: (String, String?) -> Unit,
     onLobbiesClicked: () -> Unit,
     onSettingsClicked: () -> Unit,
     onQuitClicked: () -> Unit
@@ -58,7 +58,7 @@ fun LandingScreen(
                     end.linkTo(parent.end)
                 }
                 .fillMaxWidth(.5f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Button(modifier = Modifier.fillMaxWidth(), onClick = { onPlayClicked("lobby") }) {
+            Button(modifier = Modifier.fillMaxWidth(), onClick = { onPlayClicked("lobby", null) }) {
                 Text(text = stringResource(id = R.string.menu_play))
             }
             Button(modifier = Modifier.fillMaxWidth(), onClick = onLobbiesClicked) {

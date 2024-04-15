@@ -2,6 +2,7 @@ package com.imbaland.common.data.auth.firebase
 
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.auth.auth
 import com.imbaland.common.domain.auth.AnonymousAuthenticator
 import com.imbaland.common.domain.auth.AuthenticationError
@@ -38,6 +39,10 @@ class FirebaseAuthenticator(
         suspendCancellableCoroutine { cont ->
             firebaseAuth.signInAnonymously().addOnCompleteListener {
                 it.result.user?.let { user ->
+                    user.updateProfile(
+                        UserProfileChangeRequest.
+                        Builder().
+                        setDisplayName("Imbaland").build())
                     cont.resume(Result.Success(FirebaseUser(user)))
                 } ?: cont.resume(Result.Error(AuthenticationError.NULL_USER))
             }.addOnFailureListener { error ->

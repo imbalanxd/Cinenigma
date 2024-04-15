@@ -1,5 +1,6 @@
 package com.imbaland.cinenigma.domain.model
 
+import com.imbaland.common.domain.auth.AuthenticatedUser
 import java.util.Date
 
 
@@ -17,56 +18,67 @@ import java.util.Date
 data class Lobby(
     val id: String = "",
     val title: String = "",
-    val host: String = "",
+    val host: AuthenticatedUser? = null,
     val hostJoinedAt: Date? = null,
-    val player: String = "",
+    val player: AuthenticatedUser? = null,
     val playerJoinedAt: Date? = null,
     val hasStarted: Boolean = false,
     val createdAt: Date? = null,
     val startedAt: Date? = null,
-    val games: List<Game> = listOf())
+    val games: List<Game> = listOf()
+)
+val Lobby?.hostLabel: String get() { return this?.host?.name?:"Waiting for host" }
+val Lobby?.playerLabel: String get() { return this?.player?.name?:"Waiting for player" }
 
-fun Lobby?.state(): LobbyState {
-    if(this == null || this.id.isEmpty()) {
-        return LobbyState.Invalid
+val Lobby?.state: LobbyState
+    get() {
+        if (this == null || this.id.isEmpty()) {
+            return LobbyState.Invalid
+        }
+        val stateList = mutableListOf<Boolean>().apply {
+            // 0 - Invalid
+            if (!(this@state == null || this@state.id.isEmpty())) add(true)  // 1 - Open
+            if (player != null) add(true)                            // 2 - Full
+            if (startedAt != null) add(true)                                 // 3 - Starting
+            if (hostJoinedAt != null) add(true)                              // 4 - Waiting
+            if (playerJoinedAt != null) add(true)                            // 5 - Loading
+            if (games.lastOrNull()?.let {
+                    it.movie != null && !it.completed
+                } == true) add(true)      // 6 - Playing
+        }
+        return LobbyState.values()[stateList.size]
     }
-    val stateList = mutableListOf<Boolean>().apply {
-                                                                        // 0 - Invalid
-        if(!(this@state == null || this@state.id.isEmpty())) add(true)  // 1 - Open
-        if(player.isNullOrEmpty()) add(true)                            // 2 - Full
-        if(startedAt != null) add(true)                                 // 3 - Starting
-        if(hostJoinedAt != null) add(true)                              // 4 - Waiting
-        if(playerJoinedAt != null) add(true)                            // 5 - Loading
-        if(games.lastOrNull()?.let { 
-            it.movie != null && !it.completed } == true) add(true)      // 6 - Playing
-    }
-    return LobbyState.values()[stateList.size]
-}
 
 enum class LobbyState {
     Invalid,
+
     /**
      * Only one player is present in the lobby
      */
-     Open,
+    Open,
+
     /**
      * Two players are present in the lobby
      */
-     Full,
+    Full,
+
     /**
      * The lobbing is beginning but neither player is in game
      */
-     Starting,
+    Starting,
+
     /**
      * The host is in game but the joined player is not
      */
-     Waiting,
+    Waiting,
+
     /**
      * Both players are in game but no movie is currently active
      */
-     Loading,
+    Loading,
+
     /**
      * Both players are in game and a movie is active
      */
-     Playing,
+    Playing,
 }

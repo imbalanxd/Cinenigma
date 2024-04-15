@@ -43,6 +43,7 @@ dependencies {
     implementation(libs.androidx.security.crypto)
 
     implementation(libs.hilt.android)
+    testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.android.testing)
     ksp(libs.hilt.ext.compiler)
