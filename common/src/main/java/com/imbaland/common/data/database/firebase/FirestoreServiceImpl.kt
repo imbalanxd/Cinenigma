@@ -9,6 +9,7 @@ import com.imbaland.common.domain.Error
 import com.imbaland.common.domain.Result
 import com.imbaland.common.domain.database.DatabaseError
 import com.imbaland.common.domain.database.FirestoreError
+import com.imbaland.common.tool.logDebug
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
@@ -23,7 +24,7 @@ abstract class FirestoreServiceImpl(
 ) {
 
     val db: FirebaseFirestore = Firebase.firestore
-    suspend fun <T : Any> writeDocument(
+    suspend inline fun <reified T : Any> writeDocument(
         collection: String,
         document: String?,
         data: T,
@@ -71,19 +72,26 @@ abstract class FirestoreServiceImpl(
         withContext(dispatcher) {
             callbackFlow {
                 val docRef = db.collection(collection).document(document)
-                val listener = docRef.addSnapshotListener { collection, _ ->
-                    if (collection == null) {
+                val listener = docRef.addSnapshotListener { result, _ ->
+                    if (result == null) {
+                        logDebug("Firestore document stream ($collection/$document) couldn't start")
                         trySend(Result.Error(FirestoreError.EmptyFirestoreError))
                     } else {
                         try {
-                            trySend(Result.Success(collection.toObject(T::class.java)))
+                            val obj = result.toObject(T::class.java)
+                            trySend(Result.Success(obj))
+                            logDebug("Firestore document stream ($collection/$document) received\n--$obj")
                         } catch (e: Throwable) {
                             trySend(Result.Error(FirestoreError.GeneralFirestoreError))
+                            logDebug("Firestore document stream ($collection/$document) received error\n--$e\n--Closing")
                             close(null)
                         }
                     }
                 }
-                awaitClose { listener.remove() }
+                awaitClose {
+                    logDebug("Firestore document stream ($collection/$document) closed")
+                    listener.remove()
+                }
             }
         }
 
@@ -95,19 +103,26 @@ abstract class FirestoreServiceImpl(
                         whereEqualTo(filter.key, filter.value)
                     }
                 }
-                val listener = docRef.addSnapshotListener { collection, _ ->
-                    if (collection == null) {
+                val listener = docRef.addSnapshotListener { result, _ ->
+                    if (result == null) {
+                        logDebug("Firestore collection stream ($collection) couldn't start")
                         trySend(Result.Error(FirestoreError.EmptyFirestoreError))
                     } else {
                         try {
-                            trySend(Result.Success(collection.toObjects(T::class.java)))
+                            logDebug("Firestore collection stream ($collection) received" +
+                                    "\n-- Type ${T::class.java}, Size ${result.size()}\n-- Filters ${filters}")
+                            trySend(Result.Success(result.toObjects(T::class.java)))
                         } catch (e: Throwable) {
+                            logDebug("Firestore collection stream ($collection) received error\n--$e\n--Closing")
                             trySend(Result.Error(FirestoreError.GeneralFirestoreError))
                             close(null)
                         }
                     }
                 }
-                awaitClose { listener.remove() }
+                awaitClose {
+                    logDebug("Firestore collection stream ($collection) closed")
+                    listener.remove()
+                }
             }
         }
 
@@ -116,20 +131,24 @@ abstract class FirestoreServiceImpl(
         withContext(dispatcher) {
             suspendCancellableCoroutine { cont ->
                 val docRef = db.collection(collection)
-                docRef.get().addOnSuccessListener { collection ->
-                    if (collection != null) {
-                        cont.resume(Result.Success(collection.toObjects(T::class.java)))
+                docRef.get().addOnSuccessListener { result ->
+                    if (result != null) {
+                        logDebug("Firestore collection ($collection) returned \n" +
+                                "-- Type ${T::class.java}, Size ${result.size()}")
+                        cont.resume(Result.Success(result.toObjects(T::class.java)))
                     } else {
+                        logDebug("Firestore collection ($collection) returned error: not found")
                         cont.resume(Result.Error(FirestoreError.NotFoundError))
                     }
                 }
                     .addOnFailureListener { exception ->
+                        logDebug("Firestore collection ($collection) returned error: \n--${exception}")
                         cont.resume(Result.Error(FirestoreError.GeneralFirestoreError))
                     }
             }
         }
 
-    private suspend fun <T : Any> writeData(
+    suspend inline fun <reified T : Any> writeData(
         destination: String,
         name: String?,
         data: T,
@@ -151,8 +170,10 @@ abstract class FirestoreServiceImpl(
                         add(data)
                     }
                 }.addOnSuccessListener {
+                    logDebug("Firestore document ($destination) written\n--${T::class.java}\n--${data}")
                     cont.resume(Result.Success(Unit))
                 }.addOnFailureListener {
+                    logDebug("Firestore document ($destination) write failed\n--${T::class.java}\n--${it}")
                     cont.resume(Result.Error(DatabaseError.GENERAL_ERROR))
                 }
         }
@@ -163,7 +184,7 @@ abstract class FirestoreServiceImpl(
         name: String,
         params: List<String>,
         expectedValue: List<Any?>? = null,
-        targetValue: List<Any>,
+        targetValue: List<Any?>,
         throws: List<Error>? = null
     ): Result<Unit, Error> = withContext(dispatcher) {
         suspendCancellableCoroutine { cont ->
@@ -174,10 +195,7 @@ abstract class FirestoreServiceImpl(
                 val snapshot = transaction.get(document)
                 val currentValues = List(params.size) { i -> snapshot.get(params[i]) }
                 for (i in params.indices) {
-                    if (expectedValue?.get(i) == null || currentValues?.get(i) == expectedValue?.get(
-                            i
-                        )
-                    ) {
+                    if (expectedValue?.get(i) == null || currentValues?.get(i) == expectedValue?.get(i)) {
                         targetValue?.get(i)
                             ?.let { target -> transaction.update(document, params[i], target) }
                     } else if (throws?.get(i) != null) {
@@ -185,8 +203,10 @@ abstract class FirestoreServiceImpl(
                     }
                 }
             }.addOnSuccessListener {
+                logDebug("Firestore document ($destination$name) updated\n--${targetValue}")
                 cont.resume(Result.Success(Unit))
             }.addOnFailureListener { updateValueException ->
+                logDebug("Firestore document ($destination$name) updated failed\n--${updateValueException}")
                 cont.resume(
                     Result.Error(
                         when (updateValueException) {
@@ -203,8 +223,4 @@ abstract class FirestoreServiceImpl(
             }
         }
     }
-//
-//    override suspend fun <T> readData(): Result<T, DatabaseError> {
-//        TODO("Not yet implemented")
-//    }
 }

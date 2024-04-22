@@ -41,7 +41,7 @@ class CinenigmaFirestoreImpl constructor(
                 title = title,
                 createdAt = Date(),
                 host = user,
-                hostJoinedAt = Date()
+                hostUpdatedAt = Date()
             )
             when(val result = writeDocument("lobbies", id, lobby)) {
                 is Result.Error -> return Result.Error(result.error)
@@ -56,6 +56,16 @@ class CinenigmaFirestoreImpl constructor(
                 listOf(null, null),
                 listOf(user, Date()),
                 listOf()
+            )
+        }?: return Result.Error(CinenigmaFirestoreError.InvalidUserError)
+    }
+
+    override suspend fun leaveLobby(id: String): Result<Unit, Error> {
+        user?.let { user ->
+            return updateValues("lobbies", id,
+                params = listOf("player", "playerJoinedAt"),
+                targetValue = listOf(null, null),
+                throws = listOf()
             )
         }?: return Result.Error(CinenigmaFirestoreError.InvalidUserError)
     }

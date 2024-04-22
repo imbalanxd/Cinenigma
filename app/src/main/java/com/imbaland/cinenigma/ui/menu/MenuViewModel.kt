@@ -2,16 +2,15 @@ package com.imbaland.cinenigma.ui.menu
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.imbaland.common.domain.Error
-import com.imbaland.common.domain.Result
 import com.imbaland.cinenigma.domain.model.Lobby
 import com.imbaland.cinenigma.domain.remote.CinenigmaFirestore
 import com.imbaland.common.data.auth.firebase.FirebaseAuthenticator
-import com.imbaland.movies.domain.repository.MoviesRepository
+import com.imbaland.common.domain.Error
+import com.imbaland.common.domain.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
@@ -23,30 +22,19 @@ class MenuViewModel @Inject constructor(
     private val authenticator: FirebaseAuthenticator,
     private val cinenigmaFirestore: CinenigmaFirestore
 ) : ViewModel() {
-//    private val lobbiesFlow = channelFlow {cinenigmaFirestore.watchLobbies().collect { result ->
-//        when(result) {
-//            is Result.Error -> emit(MenuUiState.ErrorState(result.error))
-//            is Result.Success -> emit(MenuUiState.IdleWithData(result.data))
-//        }
-//    }
-//    }.stateIn(
-//        scope = viewModelScope,
-//        initialValue = MenuUiState.Preloading,
-//        started = SharingStarted.WhileSubscribed(5_000),
-//    )
+    private val joinedLobby = MutableStateFlow<Lobby?>(null)
     val uiState: StateFlow<MenuUiState> = flow {
-        combine(cinenigmaFirestore.watchLobbies(), cinenigmaFirestore.watchLobbies(mapOf("player" to authenticator.account!!))) { lobbies , joinedLobbies ->
+        combine(cinenigmaFirestore.watchLobbies(), joinedLobby) { lobbies , joinedLobby ->
             when {
-                joinedLobbies is Result.Error || (joinedLobbies is Result.Success && joinedLobbies.data.isEmpty())  -> {
+                joinedLobby != null -> {
+                    MenuUiState.JoinedLobby(joinedLobby)
+                }
+                else -> {
                     when(lobbies) {
                         is Result.Error -> MenuUiState.ErrorState(lobbies.error)
                         is Result.Success -> MenuUiState.IdleWithData(lobbies.data)
                     }
                 }
-                joinedLobbies is Result.Success -> {
-                    MenuUiState.JoinedLobby(joinedLobbies.data.first())
-                }
-                else -> {MenuUiState.Preloading}
             }
         }.collect { state ->
             emit(state)
@@ -56,18 +44,20 @@ class MenuViewModel @Inject constructor(
         initialValue = MenuUiState.Preloading,
         started = SharingStarted.WhileSubscribed(5_000),
     )
-
     fun joinLobby(lobby: Lobby) {
         viewModelScope.launch {
-            when(cinenigmaFirestore.joinLobby(lobby.id)) {
+            when(val result = cinenigmaFirestore.joinLobby(lobby.id)) {
                 is Result.Error -> {
-
                 }
                 is Result.Success -> {
-
+                    joinedLobby.value = lobby.copy(player = authenticator.account)
                 }
             }
         }
+    }
+
+    fun leftLobby() {
+        joinedLobby.value = null
     }
 }
 

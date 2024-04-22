@@ -19,9 +19,9 @@ data class Lobby(
     val id: String = "",
     val title: String = "",
     val host: AuthenticatedUser? = null,
-    val hostJoinedAt: Date? = null,
+    val hostUpdatedAt: Date? = null,
     val player: AuthenticatedUser? = null,
-    val playerJoinedAt: Date? = null,
+    val playerUpdatedAt: Date? = null,
     val hasStarted: Boolean = false,
     val createdAt: Date? = null,
     val startedAt: Date? = null,
@@ -40,8 +40,8 @@ val Lobby?.state: LobbyState
             if (!(this@state == null || this@state.id.isEmpty())) add(true)  // 1 - Open
             if (player != null) add(true)                            // 2 - Full
             if (startedAt != null) add(true)                                 // 3 - Starting
-            if (hostJoinedAt != null) add(true)                              // 4 - Waiting
-            if (playerJoinedAt != null) add(true)                            // 5 - Loading
+            if (hostUpdatedAt != null) add(true)                              // 4 - Waiting
+            if (playerUpdatedAt != null) add(true)                            // 5 - Loading
             if (games.lastOrNull()?.let {
                     it.movie != null && !it.completed
                 } == true) add(true)      // 6 - Playing

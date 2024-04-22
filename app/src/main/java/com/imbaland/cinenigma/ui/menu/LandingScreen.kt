@@ -23,6 +23,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.imbaland.cinenigma.R
+import com.imbaland.cinenigma.domain.model.Lobby
 import com.imbaland.cinenigma.ui.MainActivityUiState
 import com.imbaland.common.ui.util.sharedViewModel
 import com.imbaland.movies.ui.widget.MoviePoster
@@ -30,8 +31,8 @@ import com.imbaland.movies.ui.widget.MoviePoster
 fun NavGraphBuilder.landingRoute(route: String, navController: NavController) {
     composable(route = route) {
         LandingScreen(
-            hiltViewModel<MenuViewModel>(),
-            navController::navigateToPlay,
+            hiltViewModel<MenuViewModel>(remember(it){navController.getBackStackEntry(it.destination.parent!!.route!!)}),
+            navController::navigateToLobby,
             navController::navigateToLobbies,
             navController::navigateToSettings,
             {})
@@ -41,7 +42,7 @@ fun NavGraphBuilder.landingRoute(route: String, navController: NavController) {
 @Composable
 fun LandingScreen(
     viewModel: MenuViewModel,
-    onPlayClicked: (String, String?) -> Unit,
+    onPlayClicked: (Lobby?) -> Unit,
     onLobbiesClicked: () -> Unit,
     onSettingsClicked: () -> Unit,
     onQuitClicked: () -> Unit
@@ -58,7 +59,7 @@ fun LandingScreen(
                     end.linkTo(parent.end)
                 }
                 .fillMaxWidth(.5f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Button(modifier = Modifier.fillMaxWidth(), onClick = { onPlayClicked("lobby", null) }) {
+            Button(modifier = Modifier.fillMaxWidth(), onClick = { onPlayClicked(null) }) {
                 Text(text = stringResource(id = R.string.menu_play))
             }
             Button(modifier = Modifier.fillMaxWidth(), onClick = onLobbiesClicked) {

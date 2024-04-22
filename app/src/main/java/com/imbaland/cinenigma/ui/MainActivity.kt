@@ -6,7 +6,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -15,10 +17,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -40,7 +46,6 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     private val viewModel: MainActivityViewModel by viewModels()
 
-    @OptIn(ExperimentalMaterial3Api::class)
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
@@ -70,31 +75,48 @@ class MainActivity : ComponentActivity() {
             }
         }
         setContent {
-            CinenigmaTheme {
-                Surface {
-                    val navController = rememberNavController()
-                    Scaffold(topBar = {
-                        TopAppBar(
-                            modifier = Modifier,
-                            title = { /*TODO*/ },
-                            navigationIcon = {
-                                IconButton(onClick = { navController.popBackStack() }) {
+            CinenigmaApp()
+        }
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun CinenigmaApp() {
+        CinenigmaTheme {
+            Surface {
+                val navController = rememberNavController()
+                val canPop = remember { mutableStateOf(false) }
+
+                navController.addOnDestinationChangedListener { controller, _, _ ->
+                    canPop.value = controller.previousBackStackEntry != null
+                }
+                Scaffold(topBar = {
+                    TopAppBar(
+                        modifier = Modifier,
+                        title = { /*TODO*/ },
+                        navigationIcon = {
+                            if (canPop.value) {
+                                IconButton(onClick = { navController.navigateUp() }) {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                         contentDescription = "Localized description"
                                     )
                                 }
-                            },)
-                    }) { padding ->
-                        padding.calculateBottomPadding()
-                        NavHost(
-                            navController = navController,
-                            startDestination = MENU_GRAPH,
-                            modifier = Modifier.padding(top = padding.calculateTopPadding()),
-                        ) {
-                            menuNavigationGraph(navController)
-                            gameNavigationGraph(navController)
-                        }
+                            } else {
+                                // Hide the navigation icon when the back stack is empty
+                                Spacer(modifier = Modifier.width(48.dp))
+                            }
+                        },
+                    )
+                }) { padding ->
+                    padding.calculateBottomPadding()
+                    NavHost(
+                        navController = navController,
+                        startDestination = MENU_GRAPH,
+                        modifier = Modifier.padding(top = padding.calculateTopPadding()),
+                    ) {
+                        menuNavigationGraph(navController)
+                        gameNavigationGraph(navController)
                     }
                 }
             }

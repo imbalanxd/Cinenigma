@@ -23,7 +23,7 @@ fun NavGraphBuilder.gameNavigationGraph(
     navigation(
         route = route,
         startDestination = LOBBY_ROUTE()) {
-        lobbyScreen(LOBBY_ROUTE(), navigationController)
+//        lobbyScreen(LOBBY_ROUTE(), navigationController)
     }
 }
 

@@ -1,17 +1,23 @@
 package com.imbaland.cinenigma.ui.game
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -24,10 +30,13 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.imbaland.cinenigma.R
 import com.imbaland.cinenigma.domain.model.hostLabel
 import com.imbaland.cinenigma.domain.model.playerLabel
+import com.imbaland.cinenigma.ui.menu.MenuUiState
+import com.imbaland.cinenigma.ui.menu.MenuViewModel
 
 const val IN_GAME_ARG_GAME_ID = "gameId"
 const val IN_GAME_ARG_GAME_NAME = "gameName"
@@ -43,68 +52,72 @@ fun NavGraphBuilder.lobbyScreen(route: String, navController: NavController) {
                 type = NavType.StringType
                 nullable = true
                 defaultValue = null
-            },)
-    ) { backStackEntry ->
-        LobbyScreen(
-            hiltViewModel<LobbyViewModel>(),
+            },
         )
+    ) {
+        val menuViewModel =
+            hiltViewModel<MenuViewModel>(remember(it) { navController.getBackStackEntry(it.destination.parent!!.route!!) })
+        LobbyScreen(
+            hiltViewModel<LobbyViewModel>(it),
+            navController
+        ) {
+            menuViewModel.leftLobby()
+            navController.popBackStack()
+        }
     }
 }
 
 @Composable
 fun LobbyScreen(
     viewModel: LobbyViewModel,
+    navController: NavController = rememberNavController(),
+    leftLobby: () -> Unit
 ) {
-    ConstraintLayout(modifier = Modifier.fillMaxSize()) {
-        val uiState: LobbyUiState by viewModel.uiState.collectAsStateWithLifecycle()
-        val (buttons) = createRefs()
-        Column(
-            Modifier
-                .constrainAs(buttons) {
-                    top.linkTo(parent.top)
-                    bottom.linkTo(parent.bottom)
-                    start.linkTo(parent.start)
-                    end.linkTo(parent.end)
+    val uiState: LobbyUiState by viewModel.uiState.collectAsStateWithLifecycle()
+    when (uiState) {
+        is LobbyUiState.Leaving -> {
+            leftLobby()
+        }
+        else -> {
+            ConstraintLayout(modifier = Modifier.fillMaxSize()) {
+                val (buttons) = createRefs()
+                Column(
+                    Modifier
+                        .constrainAs(buttons) {
+                            top.linkTo(parent.top)
+                            bottom.linkTo(parent.bottom)
+                            start.linkTo(parent.start)
+                            end.linkTo(parent.end)
+                        }
+                        .fillMaxWidth(.5f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(text = stringResource(id = R.string.app_name))
+                    Text(
+                        text = when (val state = uiState) {
+                            is LobbyUiState.Activated -> {
+                                state.lobby.title
+                            }
+                            is LobbyUiState.Creating -> {
+                                "Creating"
+                            }
+                            else -> {
+                                "Error"
+                            }
+                        }
+                    )
+                    PlayerLobbySlot(
+                        uiState is LobbyUiState.Activated,
+                        (uiState as? LobbyUiState.Activated)?.lobby.hostLabel
+                    )
+                    PlayerLobbySlot(
+                        uiState is LobbyUiState.Activated,
+                        (uiState as? LobbyUiState.Activated)?.lobby.playerLabel
+                    )
+                    Spacer(modifier = Modifier.height(100.dp))
+                    TextButton(onClick = viewModel::leaveLobby) {
+                        Text(text = stringResource(id = R.string.lobby_leave))
+                    }
                 }
-                .fillMaxWidth(.5f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(text = stringResource(id = R.string.app_name))
-            Text(
-                text = when (uiState) {
-                    is LobbyUiState.Creating -> {
-                        (uiState as LobbyUiState.Creating).lobbyTitle
-                    }
-
-                    is LobbyUiState.Activated -> {
-                        (uiState as LobbyUiState.Activated).lobby.title
-                    }
-
-                    else -> {
-                        "Error"
-                    }
-                }
-            )
-            PlayerLobbySlot(
-                uiState is LobbyUiState.Activated,
-                (uiState as? LobbyUiState.Activated)?.lobby.hostLabel
-            )
-            PlayerLobbySlot(
-                uiState is LobbyUiState.Activated,
-                (uiState as? LobbyUiState.Activated)?.lobby.playerLabel
-            )
-//            when(uiState) {
-//                is LobbyUiState.Creating -> {
-//
-//                }
-//                is LobbyUiState.Error -> {
-//
-//                }
-//                is LobbyUiState.Starting -> {
-//
-//                }
-//                is LobbyUiState.Waiting -> {
-//
-//                }
-//            }
+            }
         }
     }
 }
