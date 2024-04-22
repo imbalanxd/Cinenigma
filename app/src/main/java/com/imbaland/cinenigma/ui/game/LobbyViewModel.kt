@@ -10,6 +10,7 @@ import com.imbaland.cinenigma.domain.model.state
 import com.imbaland.common.domain.Error
 import com.imbaland.common.domain.Result
 import com.imbaland.cinenigma.domain.remote.CinenigmaFirestore
+import com.imbaland.common.data.auth.firebase.FirebaseAuthenticator
 import com.imbaland.movies.domain.repository.MoviesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,18 +26,18 @@ import javax.inject.Inject
 @HiltViewModel
 class LobbyViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val moviesRepository: MoviesRepository,
+    private val firebaseAuth: FirebaseAuthenticator,
     private val cinenigmaFirestore: CinenigmaFirestore
 ) : ViewModel() {
     private val gameId: String? = savedStateHandle[IN_GAME_ARG_GAME_ID]
-    private val gameName: String = savedStateHandle[IN_GAME_ARG_GAME_NAME] ?: "Default Lobby"
+    private val gameName: String = savedStateHandle[IN_GAME_ARG_GAME_NAME] ?: "${firebaseAuth.account?.name}'s Lobby"
     private val leavingLobby = MutableStateFlow<Boolean>(false)
     val uiState = MutableStateFlow<LobbyUiState>(LobbyUiState.Creating(gameName))
     init {
         viewModelScope.launch {
             //UseCase join game
             val newGameId =
-                gameId ?: when (val result = cinenigmaFirestore.createLobby(gameName!!)) {
+                gameId ?: when (val result = cinenigmaFirestore.createLobby(gameName)) {
                     is Result.Error -> {
                         uiState.value = LobbyUiState.Error(LobbyError.LobbyCreationError)
                         null

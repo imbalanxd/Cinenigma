@@ -50,7 +50,7 @@ class PathParams(vararg val template: String) {
     internal val size = template.size
     operator fun invoke(vararg params: String?): String {
         if (params.isNotEmpty() && (params.size != template.size || params.contains(null))) {
-            throw IndexOutOfBoundsException("Wrong number of parameters provided")
+            throw IndexOutOfBoundsException("Path parameters are missing or null")
         }
         return if (params.isNotEmpty()) {
             params.joinToString(separator = "") {

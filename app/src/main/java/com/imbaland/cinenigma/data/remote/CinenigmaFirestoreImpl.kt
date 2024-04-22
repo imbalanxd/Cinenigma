@@ -35,7 +35,7 @@ class CinenigmaFirestoreImpl constructor(
 
     override suspend fun createLobby(title: String): Result<Lobby, FirestoreError> {
         user?.let { user ->
-            val id = UUID.randomUUID().toString()
+            val id = user.id
             val lobby = Lobby(
                 id = id,
                 title = title,

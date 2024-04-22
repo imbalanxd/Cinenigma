@@ -1,6 +1,7 @@
 package com.imbaland.common.data.database.firebase
 
 import com.google.firebase.Firebase
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.SetOptions
@@ -80,7 +81,7 @@ abstract class FirestoreServiceImpl(
                         try {
                             val obj = result.toObject(T::class.java)
                             trySend(Result.Success(obj))
-                            logDebug("Firestore document stream ($collection/$document) received\n--$obj")
+                            logDebug("Firestore document stream ($collection/$document) received\n--${obj.toString().replace(",","\n\t")}")
                         } catch (e: Throwable) {
                             trySend(Result.Error(FirestoreError.GeneralFirestoreError))
                             logDebug("Firestore document stream ($collection/$document) received error\n--$e\n--Closing")
@@ -196,8 +197,7 @@ abstract class FirestoreServiceImpl(
                 val currentValues = List(params.size) { i -> snapshot.get(params[i]) }
                 for (i in params.indices) {
                     if (expectedValue?.get(i) == null || currentValues?.get(i) == expectedValue?.get(i)) {
-                        targetValue?.get(i)
-                            ?.let { target -> transaction.update(document, params[i], target) }
+                        targetValue?.get(i).let { target -> transaction.update(document, params[i], target?:FieldValue.delete()) }
                     } else if (throws?.get(i) != null) {
                         throw FirestoreUpdateError(throws[i])
                     }

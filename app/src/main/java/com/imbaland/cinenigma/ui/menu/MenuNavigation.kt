@@ -20,7 +20,8 @@ const val SETTINGS_ROUTE = "settings"
 /**
  * IN_GAME_ARG_GAME_NAME, IN_GAME_ARG_GAME_ID
  */
-val LOBBY_ROUTE = NavRoute(base = "lobby", pathParams = PathParams(IN_GAME_ARG_GAME_NAME), queryParams = QueryParams(
+val LOBBY_ROUTE = NavRoute(base = "lobby", queryParams = QueryParams(
+    IN_GAME_ARG_GAME_NAME,
     IN_GAME_ARG_GAME_ID
 ))
 

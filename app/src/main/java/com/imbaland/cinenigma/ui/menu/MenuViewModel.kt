@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -22,22 +23,13 @@ class MenuViewModel @Inject constructor(
     private val authenticator: FirebaseAuthenticator,
     private val cinenigmaFirestore: CinenigmaFirestore
 ) : ViewModel() {
-    private val joinedLobby = MutableStateFlow<Lobby?>(null)
+    val joinedLobby = MutableStateFlow<Lobby?>(null)
     val uiState: StateFlow<MenuUiState> = flow {
-        combine(cinenigmaFirestore.watchLobbies(), joinedLobby) { lobbies , joinedLobby ->
-            when {
-                joinedLobby != null -> {
-                    MenuUiState.JoinedLobby(joinedLobby)
-                }
-                else -> {
-                    when(lobbies) {
-                        is Result.Error -> MenuUiState.ErrorState(lobbies.error)
-                        is Result.Success -> MenuUiState.IdleWithData(lobbies.data)
-                    }
-                }
+        cinenigmaFirestore.watchLobbies().collect { lobbies ->
+            when(lobbies) {
+                is Result.Error -> emit(MenuUiState.ErrorState(lobbies.error))
+                is Result.Success -> emit(MenuUiState.IdleWithData(lobbies.data))
             }
-        }.collect { state ->
-            emit(state)
         }
     }.stateIn(
         scope = viewModelScope,
@@ -64,6 +56,6 @@ class MenuViewModel @Inject constructor(
 sealed interface MenuUiState {
     data object Preloading : MenuUiState
     data class IdleWithData(val lobbies: List<Lobby>) : MenuUiState
-    data class JoinedLobby(val lobby: Lobby): MenuUiState
+//    data class JoinedLobby(val lobby: Lobby): MenuUiState
     data class ErrorState(val error: Error) : MenuUiState
 }

@@ -46,7 +46,8 @@ fun NavGraphBuilder.lobbyScreen(route: String, navController: NavController) {
         arguments = listOf(
             navArgument(IN_GAME_ARG_GAME_NAME) {
                 type = NavType.StringType
-                defaultValue = "Cinenigma Lobby"
+                nullable = true
+                defaultValue = null
             },
             navArgument(IN_GAME_ARG_GAME_ID) {
                 type = NavType.StringType
