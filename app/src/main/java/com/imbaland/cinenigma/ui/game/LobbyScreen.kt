@@ -40,7 +40,7 @@ import com.imbaland.cinenigma.ui.menu.MenuViewModel
 
 const val IN_GAME_ARG_GAME_ID = "gameId"
 const val IN_GAME_ARG_GAME_NAME = "gameName"
-fun NavGraphBuilder.lobbyScreen(route: String, navController: NavController) {
+fun NavGraphBuilder.lobbyRoute(route: String, navController: NavController) {
     composable(
         route = route,
         arguments = listOf(

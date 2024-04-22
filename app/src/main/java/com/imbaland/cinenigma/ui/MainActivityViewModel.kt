@@ -24,8 +24,9 @@ class MainActivityViewModel @Inject constructor(
         when(val authResult = authenticator.login()) {
             is Result.Error -> {
                 when(authResult.error) {
-                    AuthenticationError.GENERAL_ERROR -> {}
-                    AuthenticationError.NULL_USER -> {}
+                    else -> {
+
+                    }
                 }
                 MainActivityUiState.ErrorState(authResult.error)
             }

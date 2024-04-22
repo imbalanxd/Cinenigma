@@ -1,14 +1,12 @@
 package com.imbaland.cinenigma.ui.menu
 
-import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.navigation
 import com.imbaland.cinenigma.domain.model.Lobby
-import com.imbaland.cinenigma.ui.game.GAME_GRAPH
 import com.imbaland.cinenigma.ui.game.IN_GAME_ARG_GAME_ID
 import com.imbaland.cinenigma.ui.game.IN_GAME_ARG_GAME_NAME
-import com.imbaland.cinenigma.ui.game.lobbyScreen
+import com.imbaland.cinenigma.ui.game.lobbyRoute
 import com.imbaland.common.ui.util.NavRoute
 import com.imbaland.common.ui.util.PathParams
 import com.imbaland.common.ui.util.QueryParams
@@ -34,8 +32,8 @@ fun NavGraphBuilder.menuNavigationGraph(
         startDestination = LANDING_ROUTE) {
         landingRoute(LANDING_ROUTE, navigationController)
         lobbiesRoute(LOBBIES_ROUTE, navigationController)
-        lobbyScreen(LOBBY_ROUTE(), navigationController)
-        settingsRoute(SETTINGS_ROUTE)
+        lobbyRoute(LOBBY_ROUTE(), navigationController)
+        settingsRoute(SETTINGS_ROUTE, navigationController)
     }
 
 }

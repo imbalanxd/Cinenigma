@@ -7,6 +7,7 @@ import com.imbaland.cinenigma.domain.remote.CinenigmaFirestore
 import com.imbaland.common.data.auth.firebase.FirebaseAuthenticator
 import com.imbaland.common.domain.Error
 import com.imbaland.common.domain.Result
+import com.imbaland.common.domain.auth.AuthenticatedUser
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,7 +29,7 @@ class MenuViewModel @Inject constructor(
         cinenigmaFirestore.watchLobbies().collect { lobbies ->
             when(lobbies) {
                 is Result.Error -> emit(MenuUiState.ErrorState(lobbies.error))
-                is Result.Success -> emit(MenuUiState.IdleWithData(lobbies.data))
+                is Result.Success -> emit(MenuUiState.IdleWithData(lobbies.data, authenticator.account))
             }
         }
     }.stateIn(
@@ -51,11 +52,17 @@ class MenuViewModel @Inject constructor(
     fun leftLobby() {
         joinedLobby.value = null
     }
+
+    fun changeName(name: String) {
+        viewModelScope.launch {
+            authenticator.changeName(name)
+        }
+    }
 }
 
-sealed interface MenuUiState {
-    data object Preloading : MenuUiState
-    data class IdleWithData(val lobbies: List<Lobby>) : MenuUiState
+sealed class MenuUiState(open val user: AuthenticatedUser?) {
+    data object Preloading : MenuUiState(null)
+    data class IdleWithData(val lobbies: List<Lobby>, override val user: AuthenticatedUser?) : MenuUiState(user)
 //    data class JoinedLobby(val lobby: Lobby): MenuUiState
-    data class ErrorState(val error: Error) : MenuUiState
+    data class ErrorState(val error: Error) : MenuUiState(null)
 }

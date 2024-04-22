@@ -10,6 +10,7 @@ interface Authenticator {
  interface AnonymousAuthenticator: Authenticator {
      suspend fun login(): Result<AuthenticatedUser, AuthenticationError>
      suspend fun logout(): Result<Unit, AuthenticationError>
+     suspend fun changeName(name: String): Result<Unit, AuthenticationError>
  }
 
 open class AuthenticatedUser(val id: String = "", val name: String = "") {
@@ -17,5 +18,6 @@ open class AuthenticatedUser(val id: String = "", val name: String = "") {
 
 enum class AuthenticationError: Error {
     GENERAL_ERROR,
-    NULL_USER
+    NULL_USER,
+    NAME_CHANGE_FAILED
 }
