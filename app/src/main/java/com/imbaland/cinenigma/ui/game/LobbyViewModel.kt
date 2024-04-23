@@ -1,26 +1,20 @@
 package com.imbaland.cinenigma.ui.game
 
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.imbaland.cinenigma.domain.model.Lobby
 import com.imbaland.cinenigma.domain.model.LobbyState
 import com.imbaland.cinenigma.domain.model.state
-import com.imbaland.common.domain.Error
 import com.imbaland.common.domain.Result
 import com.imbaland.cinenigma.domain.remote.CinenigmaFirestore
+import com.imbaland.cinenigma.ui.menu.IN_GAME_ARG_GAME_ID
+import com.imbaland.cinenigma.ui.menu.IN_GAME_ARG_GAME_NAME
 import com.imbaland.common.data.auth.firebase.FirebaseAuthenticator
-import com.imbaland.movies.domain.repository.MoviesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.util.Date
 import javax.inject.Inject
 
 @HiltViewModel

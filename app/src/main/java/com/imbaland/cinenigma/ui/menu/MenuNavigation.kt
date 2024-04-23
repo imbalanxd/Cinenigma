@@ -4,11 +4,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.navigation
 import com.imbaland.cinenigma.domain.model.Lobby
-import com.imbaland.cinenigma.ui.game.IN_GAME_ARG_GAME_ID
-import com.imbaland.cinenigma.ui.game.IN_GAME_ARG_GAME_NAME
-import com.imbaland.cinenigma.ui.game.lobbyRoute
 import com.imbaland.common.ui.util.NavRoute
-import com.imbaland.common.ui.util.PathParams
 import com.imbaland.common.ui.util.QueryParams
 
 const val MENU_GRAPH = "menu"

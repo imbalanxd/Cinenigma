@@ -1,6 +1,5 @@
-package com.imbaland.cinenigma.ui.game
+package com.imbaland.cinenigma.ui.menu
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,8 +13,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -35,8 +32,8 @@ import androidx.navigation.navArgument
 import com.imbaland.cinenigma.R
 import com.imbaland.cinenigma.domain.model.hostLabel
 import com.imbaland.cinenigma.domain.model.playerLabel
-import com.imbaland.cinenigma.ui.menu.MenuUiState
-import com.imbaland.cinenigma.ui.menu.MenuViewModel
+import com.imbaland.cinenigma.ui.game.LobbyUiState
+import com.imbaland.cinenigma.ui.game.LobbyViewModel
 
 const val IN_GAME_ARG_GAME_ID = "gameId"
 const val IN_GAME_ARG_GAME_NAME = "gameName"
