@@ -26,7 +26,7 @@ class MenuViewModel @Inject constructor(
 ) : ViewModel() {
     val joinedLobby = MutableStateFlow<Lobby?>(null)
     val uiState: StateFlow<MenuUiState> = flow {
-        cinenigmaFirestore.watchLobbies().collect { lobbies ->
+        cinenigmaFirestore.watchLobbies(exclude = "id" to "${authenticator.account?.id}").collect { lobbies ->
             when(lobbies) {
                 is Result.Error -> emit(MenuUiState.ErrorState(lobbies.error))
                 is Result.Success -> emit(MenuUiState.IdleWithData(lobbies.data, authenticator.account))

@@ -32,21 +32,13 @@ val Lobby?.playerLabel: String get() { return this?.player?.name?:"Waiting for p
 
 val Lobby?.state: LobbyState
     get() {
-        if (this == null || this.id.isEmpty()) {
-            return LobbyState.Invalid
-        }
-        val stateList = mutableListOf<Boolean>().apply {
-            // 0 - Invalid
-            if (!(this@state == null || this@state.id.isEmpty())) add(true)  // 1 - Open
-            if (player != null) add(true)                            // 2 - Full
-            if (startedAt != null) add(true)                                 // 3 - Starting
-            if (hostUpdatedAt != null) add(true)                              // 4 - Waiting
-            if (playerUpdatedAt != null) add(true)                            // 5 - Loading
-            if (games.lastOrNull()?.let {
-                    it.movie != null && !it.completed
-                } == true) add(true)      // 6 - Playing
-        }
-        return LobbyState.values()[stateList.size]
+        if ((this@state == null || this@state.id.isEmpty() || this@state.host == null)) return LobbyState.Invalid  // 1 - Open
+        if (player == null) return LobbyState.Open                          // 2 - Full
+        if (startedAt == null) return LobbyState.Full                                 // 3 - Starting
+        if (hostUpdatedAt != null) return LobbyState.Starting                              // 4 - Waiting
+        if (playerUpdatedAt != null) return LobbyState.Waiting                              // 5 - Loading
+        if (games.isNullOrEmpty()) return LobbyState.Loading
+        return LobbyState.Playing
     }
 
 enum class LobbyState {

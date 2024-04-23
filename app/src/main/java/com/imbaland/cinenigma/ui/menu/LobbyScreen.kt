@@ -60,7 +60,7 @@ fun NavGraphBuilder.lobbyRoute(route: String, navController: NavController) {
             navController
         ) {
             menuViewModel.leftLobby()
-            navController.popBackStack()
+            navController.navigateUp()
         }
     }
 }
@@ -73,7 +73,7 @@ fun LobbyScreen(
 ) {
     val uiState: LobbyUiState by viewModel.uiState.collectAsStateWithLifecycle()
     when (uiState) {
-        is LobbyUiState.Leaving -> {
+        is LobbyUiState.Closing -> {
             leftLobby()
         }
         else -> {
@@ -91,7 +91,7 @@ fun LobbyScreen(
                     Text(text = stringResource(id = R.string.app_name))
                     Text(
                         text = when (val state = uiState) {
-                            is LobbyUiState.Activated -> {
+                            is LobbyUiState.Created -> {
                                 state.lobby.title
                             }
                             is LobbyUiState.Creating -> {
@@ -103,12 +103,12 @@ fun LobbyScreen(
                         }
                     )
                     PlayerLobbySlot(
-                        uiState is LobbyUiState.Activated,
-                        (uiState as? LobbyUiState.Activated)?.lobby.hostLabel
+                        uiState is LobbyUiState.Created,
+                        (uiState as? LobbyUiState.Created)?.lobby.hostLabel
                     )
                     PlayerLobbySlot(
-                        uiState is LobbyUiState.Activated,
-                        (uiState as? LobbyUiState.Activated)?.lobby.playerLabel
+                        uiState is LobbyUiState.Created,
+                        (uiState as? LobbyUiState.Created)?.lobby.playerLabel
                     )
                     Spacer(modifier = Modifier.height(100.dp))
                     TextButton(onClick = viewModel::leaveLobby) {

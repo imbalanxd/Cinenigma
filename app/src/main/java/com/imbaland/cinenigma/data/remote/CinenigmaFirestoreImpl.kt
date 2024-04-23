@@ -21,8 +21,8 @@ class CinenigmaFirestoreImpl constructor(
         return readCollection<Lobby>("lobbies")
     }
 
-    override suspend fun watchLobbies(filters: Map<String, Any>): Flow<Result<List<Lobby>, FirestoreError>> {
-        return watchCollection<Lobby>("lobbies", filters)
+    override suspend fun watchLobbies(filters: Map<String, Any>, exclude: Pair<String, Any>?): Flow<Result<List<Lobby>, FirestoreError>> {
+        return watchCollection<Lobby>("lobbies", filters, exclude)
     }
 
     override suspend fun getLobby(id: String): Result<Lobby, FirestoreError> {
@@ -60,10 +60,10 @@ class CinenigmaFirestoreImpl constructor(
         }?: return Result.Error(CinenigmaFirestoreError.InvalidUserError)
     }
 
-    override suspend fun leaveLobby(id: String): Result<Unit, Error> {
+    override suspend fun leaveLobby(id: String, isHost: Boolean): Result<Unit, Error> {
         user?.let { user ->
             return updateValues("lobbies", id,
-                params = listOf("player", "playerJoinedAt"),
+                params = if(isHost) listOf("host", "hostUpdatedAt") else listOf("player", "playerUpdatedAt"),
                 targetValue = listOf(null, null),
                 throws = listOf()
             )

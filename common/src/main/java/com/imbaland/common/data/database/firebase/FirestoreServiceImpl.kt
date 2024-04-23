@@ -96,14 +96,16 @@ abstract class FirestoreServiceImpl(
             }
         }
 
-    suspend inline fun <reified T> watchCollection(collection: String, filters: Map<String, Any> = mapOf()): Flow<Result<List<T>, FirestoreError>> =
+    suspend inline fun <reified T> watchCollection(collection: String,
+                                                   filters: Map<String, Any> = mapOf(),
+                                                   exclude: Pair<String, Any>?): Flow<Result<List<T>, FirestoreError>> =
         withContext(dispatcher) {
             callbackFlow {
-                val docRef = db.collection(collection).apply {
-                    filters.forEach { filter ->
-                        whereEqualTo(filter.key, filter.value)
-                    }
+                var docRef = db.collection(collection).limit(20)
+                filters.forEach { filter ->
+                    docRef = docRef.whereEqualTo(filter.key, filter.value)
                 }
+                docRef = exclude?.let { docRef.whereNotEqualTo(it.first, it.second) }?:docRef
                 val listener = docRef.addSnapshotListener { result, _ ->
                     if (result == null) {
                         logDebug("Firestore collection stream ($collection) couldn't start")
