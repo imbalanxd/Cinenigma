@@ -1,4 +1,4 @@
-package com.imbaland.cinenigma.ui.game
+package com.imbaland.cinenigma.ui.menu
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -8,13 +8,13 @@ import com.imbaland.cinenigma.domain.model.LobbyState
 import com.imbaland.cinenigma.domain.model.state
 import com.imbaland.common.domain.Result
 import com.imbaland.cinenigma.domain.remote.CinenigmaFirestore
-import com.imbaland.cinenigma.ui.menu.IN_GAME_ARG_GAME_ID
-import com.imbaland.cinenigma.ui.menu.IN_GAME_ARG_GAME_NAME
 import com.imbaland.common.data.auth.firebase.FirebaseAuthenticator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import java.time.temporal.ChronoUnit
+import java.util.Date
 import javax.inject.Inject
 
 @HiltViewModel
@@ -66,14 +66,18 @@ class LobbyViewModel @Inject constructor(
                                     LobbyState.Full -> {
                                         if(isHost) Host.Full(lobby) else Joiner.Waiting(lobby)
                                     }
-                                    LobbyState.Starting, LobbyState.Waiting -> {
-                                        if(isHost) Host.Starting(lobby) else Joiner.Starting(lobby)
+                                    LobbyState.Starting -> {
+                                        if(isHost) {
+                                            Host.Starting(lobby)
+                                        } else {
+                                            startLobby()
+                                            Joiner.Starting(lobby)
+                                        }
                                     }
-
-                                    LobbyState.Loading, LobbyState.Playing -> {
+                                    LobbyState.Confirmed -> {
                                         LobbyUiState.Started(lobby)
                                     }
-                                    null -> {
+                                    else -> {
                                         LobbyUiState.Error(LobbyError.LobbyJoiningError)
                                     }
                                 }
@@ -86,7 +90,46 @@ class LobbyViewModel @Inject constructor(
             }
         }
     }
+    fun startGame() {
+        if(!isHost)
+            return
+        viewModelScope.launch {
+            when (val state = uiState.value) {
+                is LobbyUiState.Created -> {
+                    when (cinenigmaFirestore.startGame(state.lobby.id)) {
+                        is Result.Error -> {
 
+                        }
+                        is Result.Success -> {
+
+                        }
+                    }
+                }
+                else -> {
+
+                }
+            }
+        }
+    }
+    fun startLobby() {
+        viewModelScope.launch {
+            when (val state = uiState.value) {
+                is LobbyUiState.Created -> {
+                    when (cinenigmaFirestore.startLobby(state.lobby.id, isHost)) {
+                        is Result.Error -> {
+
+                        }
+                        is Result.Success -> {
+
+                        }
+                    }
+                }
+                else -> {
+
+                }
+            }
+        }
+    }
     fun leaveLobby() {
         viewModelScope.launch {
             when (val state = uiState.value) {
@@ -113,7 +156,10 @@ sealed class LobbyUiState {
     data class Error(val error: LobbyError) : LobbyUiState()
     data class Creating(val name: String) : LobbyUiState()
     sealed class Created(open val lobby: Lobby) : LobbyUiState()
-    data class Started(val lobby: Lobby) : LobbyUiState()
+    data class Started(val lobby: Lobby) : LobbyUiState() {
+        val countdown: Int
+            get() = ChronoUnit.SECONDS.between(Date().toInstant(), lobby.playerStartedAt?.toInstant()).toInt()
+    }
     data object Closing : LobbyUiState()
 }
 

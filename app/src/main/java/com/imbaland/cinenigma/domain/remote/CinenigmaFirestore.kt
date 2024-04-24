@@ -17,6 +17,8 @@ interface CinenigmaFirestore {
     suspend fun createLobby(title: String): Result<Lobby, FirestoreError>
     suspend fun joinLobby(id: String): Result<Unit, Error>
     suspend fun leaveLobby(id: String, isHost: Boolean = false): Result<Unit, Error>
+    suspend fun startLobby(id: String, isHost: Boolean): Result<Unit, Error>
+    suspend fun startGame(id: String): Result<Unit, Error>
     /**
      * Game Navs
      */

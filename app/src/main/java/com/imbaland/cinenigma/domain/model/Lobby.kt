@@ -1,6 +1,10 @@
 package com.imbaland.cinenigma.domain.model
 
 import com.imbaland.common.domain.auth.AuthenticatedUser
+import java.time.chrono.ChronoPeriod
+import java.time.temporal.ChronoUnit
+import java.time.temporal.TemporalUnit
+import java.util.Calendar
 import java.util.Date
 
 
@@ -23,20 +27,28 @@ data class Lobby(
     val player: AuthenticatedUser? = null,
     val playerUpdatedAt: Date? = null,
     val hasStarted: Boolean = false,
-    val createdAt: Date? = null,
-    val startedAt: Date? = null,
+    val hostStartedAt: Date? = null,
+    val playerStartedAt: Date? = null,
+    val gameStartedAt: Date? = null,
     val games: List<Game> = listOf()
 )
-val Lobby?.hostLabel: String get() { return this?.host?.name?:"Waiting for host" }
-val Lobby?.playerLabel: String get() { return this?.player?.name?:"Waiting for player" }
+
+val Lobby?.hostLabel: String
+    get() {
+        return this?.host?.name ?: "Waiting for host"
+    }
+val Lobby?.playerLabel: String
+    get() {
+        return this?.player?.name ?: "Waiting for player"
+    }
 
 val Lobby?.state: LobbyState
     get() {
-        if ((this@state == null || this@state.id.isEmpty() || this@state.host == null)) return LobbyState.Invalid  // 1 - Open
-        if (player == null) return LobbyState.Open                          // 2 - Full
-        if (startedAt == null) return LobbyState.Full                                 // 3 - Starting
-        if (hostUpdatedAt != null) return LobbyState.Starting                              // 4 - Waiting
-        if (playerUpdatedAt != null) return LobbyState.Waiting                              // 5 - Loading
+        if ((this@state == null || this@state.id.isEmpty() || this@state.host == null)) return LobbyState.Invalid   // 1 - Open
+        if (player == null) return LobbyState.Open                                                                  // 2 - Full
+        if (hostStartedAt == null) return LobbyState.Full                                                           // 3 - Starting
+        if (playerStartedAt == null) return LobbyState.Starting                                                     // 4 - Waiting
+        if (gameStartedAt == null) return LobbyState.Confirmed                                                      // 5 - Loading
         if (games.isNullOrEmpty()) return LobbyState.Loading
         return LobbyState.Playing
     }
@@ -55,14 +67,14 @@ enum class LobbyState {
     Full,
 
     /**
-     * The lobbing is beginning but neither player is in game
+     * The lobby is beginning but neither player is in game
      */
     Starting,
 
     /**
      * The host is in game but the joined player is not
      */
-    Waiting,
+    Confirmed,
 
     /**
      * Both players are in game but no movie is currently active

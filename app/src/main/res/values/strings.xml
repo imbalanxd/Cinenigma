@@ -7,6 +7,7 @@
     <string name="lobby_joined">Player Joined!</string>
     <string name="lobby_left">Player Left</string>
     <string name="lobby_leave">Leave Lobby</string>
+    <string name="lobby_start">Start Game</string>
 
 <!--    <string name="lobby_left">Player Left</string>-->
 <!--    <string name="lobby_left">Player Left</string>-->

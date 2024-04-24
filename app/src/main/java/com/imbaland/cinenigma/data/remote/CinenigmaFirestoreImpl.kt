@@ -10,18 +10,22 @@ import com.imbaland.common.domain.Error
 import com.imbaland.common.domain.Result
 import com.imbaland.common.domain.database.FirestoreError
 import kotlinx.coroutines.flow.Flow
+import java.util.Calendar
 import java.util.Date
 import java.util.UUID
 
 class CinenigmaFirestoreImpl constructor(
     val user: FirebaseUser?
-): FirestoreServiceImpl(),
+) : FirestoreServiceImpl(),
     CinenigmaFirestore {
     override suspend fun getLobbies(): Result<List<Lobby>, FirestoreError> {
         return readCollection<Lobby>("lobbies")
     }
 
-    override suspend fun watchLobbies(filters: Map<String, Any>, exclude: Pair<String, Any>?): Flow<Result<List<Lobby>, FirestoreError>> {
+    override suspend fun watchLobbies(
+        filters: Map<String, Any>,
+        exclude: Pair<String, Any>?
+    ): Flow<Result<List<Lobby>, FirestoreError>> {
         return watchCollection<Lobby>("lobbies", filters, exclude)
     }
 
@@ -39,34 +43,61 @@ class CinenigmaFirestoreImpl constructor(
             val lobby = Lobby(
                 id = id,
                 title = title,
-                createdAt = Date(),
                 host = user,
                 hostUpdatedAt = Date()
             )
-            when(val result = writeDocument("lobbies", id, lobby)) {
+            when (val result = writeDocument("lobbies", id, lobby)) {
                 is Result.Error -> return Result.Error(result.error)
                 is Result.Success -> return Result.Success(lobby)
             }
-        }?: return Result.Error(CinenigmaFirestoreError.InvalidUserError)
+        } ?: return Result.Error(CinenigmaFirestoreError.InvalidUserError)
     }
+
     override suspend fun joinLobby(id: String): Result<Unit, Error> {
         user?.let { user ->
-            return updateValues("lobbies", id,
+            return updateValues(
+                "lobbies", id,
                 listOf("player", "playerJoinedAt"),
                 listOf(null, null),
                 listOf(user, Date()),
                 listOf()
             )
-        }?: return Result.Error(CinenigmaFirestoreError.InvalidUserError)
+        } ?: return Result.Error(CinenigmaFirestoreError.InvalidUserError)
     }
 
     override suspend fun leaveLobby(id: String, isHost: Boolean): Result<Unit, Error> {
         user?.let { user ->
-            return updateValues("lobbies", id,
-                params = if(isHost) listOf("host", "hostUpdatedAt") else listOf("player", "playerUpdatedAt"),
+            return updateValues(
+                "lobbies", id,
+                params = if (isHost) listOf("host", "hostUpdatedAt") else listOf(
+                    "player",
+                    "playerUpdatedAt"
+                ),
                 targetValue = listOf(null, null),
                 throws = listOf()
             )
-        }?: return Result.Error(CinenigmaFirestoreError.InvalidUserError)
+        } ?: return Result.Error(CinenigmaFirestoreError.InvalidUserError)
+    }
+    override suspend fun startLobby(id: String, isHost: Boolean): Result<Unit, Error> {
+        return updateValues(
+            "lobbies", id,
+            listOf(if(isHost) "hostStartedAt" else "playerStartedAt"),
+            listOf(null),
+            listOf(Calendar.getInstance().run {
+                add(Calendar.SECOND, 10)
+                time
+            }),
+            listOf()
+        )
+    }
+
+    override suspend fun startGame(id: String): Result<Unit, Error> {
+        return updateValues(
+            "lobbies", id,
+            listOf("gameStartedAt"),
+            listOf(null),
+            listOf(Date()),
+            listOf()
+        )
     }
 }
