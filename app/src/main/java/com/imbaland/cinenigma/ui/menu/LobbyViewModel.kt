@@ -75,6 +75,9 @@ class LobbyViewModel @Inject constructor(
                                         }
                                     }
                                     LobbyState.Confirmed -> {
+                                        LobbyUiState.Countdown(lobby)
+                                    }
+                                    LobbyState.Loading, LobbyState.Playing -> {
                                         LobbyUiState.Started(lobby)
                                     }
                                     else -> {
@@ -95,8 +98,8 @@ class LobbyViewModel @Inject constructor(
             return
         viewModelScope.launch {
             when (val state = uiState.value) {
-                is LobbyUiState.Created -> {
-                    when (cinenigmaFirestore.startGame(state.lobby.id)) {
+                is LobbyUiState.Countdown -> {
+                    when (cinenigmaFirestore.startGame(state.lobby.id, state.lobby.host!!)) {
                         is Result.Error -> {
 
                         }
@@ -156,10 +159,11 @@ sealed class LobbyUiState {
     data class Error(val error: LobbyError) : LobbyUiState()
     data class Creating(val name: String) : LobbyUiState()
     sealed class Created(open val lobby: Lobby) : LobbyUiState()
-    data class Started(val lobby: Lobby) : LobbyUiState() {
-        val countdown: Int
+    data class Countdown(val lobby: Lobby) : LobbyUiState() {
+        val timeRemaining: Int
             get() = ChronoUnit.SECONDS.between(Date().toInstant(), lobby.playerStartedAt?.toInstant()).toInt()
     }
+    data class Started(val lobby: Lobby) : LobbyUiState()
     data object Closing : LobbyUiState()
 }
 

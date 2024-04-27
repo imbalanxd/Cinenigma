@@ -1,6 +1,8 @@
 package com.imbaland.cinenigma.data.remote
 
-import com.imbaland.cinenigma.domain.CinenigmaError
+import com.imbaland.cinenigma.domain.model.Game
+import com.imbaland.cinenigma.domain.model.Guess
+import com.imbaland.cinenigma.domain.model.Hint
 import com.imbaland.cinenigma.domain.model.Lobby
 import com.imbaland.cinenigma.domain.remote.CinenigmaFirestore
 import com.imbaland.cinenigma.domain.remote.CinenigmaFirestoreError
@@ -8,14 +10,17 @@ import com.imbaland.common.data.auth.firebase.FirebaseUser
 import com.imbaland.common.data.database.firebase.FirestoreServiceImpl
 import com.imbaland.common.domain.Error
 import com.imbaland.common.domain.Result
+import com.imbaland.common.domain.auth.AuthenticatedUser
 import com.imbaland.common.domain.database.FirestoreError
+import com.imbaland.movies.domain.repository.MoviesRepository
 import kotlinx.coroutines.flow.Flow
 import java.util.Calendar
 import java.util.Date
-import java.util.UUID
+import kotlin.random.Random
 
 class CinenigmaFirestoreImpl constructor(
-    val user: FirebaseUser?
+    val user: FirebaseUser?,
+    val moviesRepository: MoviesRepository
 ) : FirestoreServiceImpl(),
     CinenigmaFirestore {
     override suspend fun getLobbies(): Result<List<Lobby>, FirestoreError> {
@@ -47,8 +52,12 @@ class CinenigmaFirestoreImpl constructor(
                 hostUpdatedAt = Date()
             )
             when (val result = writeDocument("lobbies", id, lobby)) {
-                is Result.Error -> return Result.Error(result.error)
-                is Result.Success -> return Result.Success(lobby)
+                is Result.Error -> {
+                    return Result.Error(result.error)
+                }
+                is Result.Success -> {
+                    return Result.Success(lobby)
+                }
             }
         } ?: return Result.Error(CinenigmaFirestoreError.InvalidUserError)
     }
@@ -84,20 +93,52 @@ class CinenigmaFirestoreImpl constructor(
             listOf(if(isHost) "hostStartedAt" else "playerStartedAt"),
             listOf(null),
             listOf(Calendar.getInstance().run {
-                add(Calendar.SECOND, 10)
+                add(Calendar.SECOND, 5)
                 time
             }),
             listOf()
         )
     }
-
-    override suspend fun startGame(id: String): Result<Unit, Error> {
-        return updateValues(
-            "lobbies", id,
-            listOf("gameStartedAt"),
-            listOf(null),
-            listOf(Date()),
+    override suspend fun startGame(id: String, hinter: AuthenticatedUser): Result<Unit, Error> {
+        when(val result = moviesRepository.discover(Random.nextInt(1, 100))) {
+            is Result.Success -> {
+                val newGame = Game(
+                    movie = result.data[Random.nextInt(0, 20)],
+                    hinter = hinter)
+                val result = updateValues(
+                    "lobbies", id,
+                    listOf("gameStartedAt", "activeGame"),
+                    listOf(null, null),
+                    listOf(Date(), newGame),
+                    listOf()
+                )
+                when(result) {
+                    is Result.Success -> {
+                        return result
+                    }
+                    is Result.Error -> {
+                        return result
+                    }
+                }
+            }
+            is Result.Error -> {
+                return Result.Error(CinenigmaFirestoreError.GameStartError)
+            }
+        }
+    }
+    override suspend fun startHint(lobby: Lobby, hint: Hint): Result<Unit, Error> {
+        val rounds = lobby.activeGame?.rounds
+        val result = updateValues(
+            "lobbies", lobby.id,
+            listOf("activeGame.completed"),
+            listOf(false),
+            listOf(true),
             listOf()
         )
+        return result
+    }
+
+    override suspend fun startGuess(lobby: Lobby, hint: Guess): Result<Unit, Error> {
+        TODO("Not yet implemented")
     }
 }

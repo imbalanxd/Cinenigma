@@ -5,5 +5,5 @@ abstract class Media(
     abstract val media_type: String
     abstract val image: String
     abstract val id: Int
-    abstract  val popularity: Double
+    abstract val popularity: Double
 }

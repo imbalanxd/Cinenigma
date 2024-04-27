@@ -9,18 +9,16 @@ import com.imbaland.common.ui.util.NavRoute
 import com.imbaland.common.ui.util.PathParams
 import com.imbaland.common.ui.util.QueryParams
 /**
- * IN_GAME_ARG_GAME_NAME, IN_GAME_ARG_GAME_ID
+ * IN_GAME_ARG_GAME_ID
  */
-val GAME_GRAPH = NavRoute("game", pathParams = PathParams(IN_GAME_ARG_GAME_NAME), queryParams = QueryParams(
+val GAME_GRAPH = NavRoute("game", pathParams = PathParams(
     IN_GAME_ARG_GAME_ID
-))
+)
+)
 /**
- * IN_GAME_ARG_GAME_NAME, IN_GAME_ARG_GAME_ID
+ * IN_GAME_ARG_GAME_ID
  */
-private val LOBBY_ROUTE = NavRoute(base = "lobby", pathParams = PathParams(IN_GAME_ARG_GAME_NAME), queryParams = QueryParams(
-    IN_GAME_ARG_GAME_ID
-))
-private val GUESS_ROUTE = NavRoute("guess")
+private val GAME_ROUTE = NavRoute(base = "lobby", pathParams = PathParams(IN_GAME_ARG_GAME_ID))
 
 fun NavGraphBuilder.gameNavigationGraph(
     navigationController: NavController,
@@ -28,14 +26,11 @@ fun NavGraphBuilder.gameNavigationGraph(
 ) {
     navigation(
         route = route,
-        startDestination = LOBBY_ROUTE()) {
-//        lobbyScreen(LOBBY_ROUTE(), navigationController)
+        startDestination = GAME_ROUTE()) {
+        gameRoute(GAME_ROUTE(), navigationController)
     }
 }
 
-fun NavController.navigateToInGame() {
-    navigate(LOBBY_ROUTE())
-}
-fun NavController.navigateToGuessScreen() {
-    navigate(GUESS_ROUTE())
+fun NavController.navigateToInGame(gameId: String) {
+    navigate(GAME_ROUTE(gameId))
 }

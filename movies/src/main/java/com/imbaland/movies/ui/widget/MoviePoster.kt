@@ -5,6 +5,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -13,9 +14,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.toAndroidRectF
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.times
 import coil.compose.AsyncImagePainter
@@ -57,6 +61,9 @@ fun MoviePoster(modifier: Modifier = Modifier, imageUrl: String) {
                         ?.toAndroidRectF()
                         ?.times(1 / scaleRatio)
                         ?.let { dragBox ->
+                            val shape = GenericShape { size: Size, layoutDirection: LayoutDirection ->
+                                addRect(box)
+                            }
                             this.pixelate((box.maxDimension / scaleRatio / 27.0f * if (textRects.value.find { textBox ->
                                     with(dragBox) {
                                         textBox.intersects(left.toInt(), top.toInt(), right.toInt(), bottom.toInt())
@@ -64,6 +71,7 @@ fun MoviePoster(modifier: Modifier = Modifier, imageUrl: String) {
                                 } != null) 2.5f else 1f).pow(1.12f),
                                 box.topLeft,
                                 box.size)
+                                .clip(shape)
                         } ?: this
                 },
             contentScale = ContentScale.FillWidth,

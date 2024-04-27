@@ -17,6 +17,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -37,6 +38,7 @@ import androidx.navigation.navArgument
 import com.imbaland.cinenigma.R
 import com.imbaland.cinenigma.domain.model.hostLabel
 import com.imbaland.cinenigma.domain.model.playerLabel
+import com.imbaland.cinenigma.ui.game.navigateToInGame
 import kotlinx.coroutines.delay
 
 const val IN_GAME_ARG_GAME_ID = "gameId"
@@ -76,15 +78,18 @@ fun LobbyScreen(
     leftLobby: () -> Unit
 ) {
     val uiState: LobbyUiState by viewModel.uiState.collectAsStateWithLifecycle()
-    when (uiState) {
+    when (val state = uiState) {
         is LobbyUiState.Closing -> {
             leftLobby()
+        }
+        is LobbyUiState.Started -> {
+            navController.navigateToInGame(state.lobby.id)
         }
         else -> {
             ConstraintLayout(modifier = Modifier.fillMaxSize()) {
                 val (buttons, countdown) = createRefs()
-                (uiState as? LobbyUiState.Started)?.let { started ->
-                    var timer by remember { mutableStateOf(started.countdown) }
+                (uiState as? LobbyUiState.Countdown)?.timeRemaining?.let { timeRemaining ->
+                    var timer by remember { mutableIntStateOf(timeRemaining) }
                     LaunchedEffect(key1 = timer) {
                         if (timer > 0) {
                             delay(1_000)

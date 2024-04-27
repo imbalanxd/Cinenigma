@@ -1,6 +1,7 @@
 package com.imbaland.cinenigma.domain.model
 
 import com.imbaland.common.domain.auth.AuthenticatedUser
+import org.junit.experimental.categories.Categories.ExcludeCategory
 import java.time.chrono.ChronoPeriod
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalUnit
@@ -30,9 +31,10 @@ data class Lobby(
     val hostStartedAt: Date? = null,
     val playerStartedAt: Date? = null,
     val gameStartedAt: Date? = null,
-    val games: List<Game> = listOf()
-)
+    val activeGame: Game? = null
+) {
 
+}
 val Lobby?.hostLabel: String
     get() {
         return this?.host?.name ?: "Waiting for host"
@@ -48,9 +50,9 @@ val Lobby?.state: LobbyState
         if (player == null) return LobbyState.Open                                                                  // 2 - Full
         if (hostStartedAt == null) return LobbyState.Full                                                           // 3 - Starting
         if (playerStartedAt == null) return LobbyState.Starting                                                     // 4 - Waiting
-        if (gameStartedAt == null) return LobbyState.Confirmed                                                      // 5 - Loading
-        if (games.isNullOrEmpty()) return LobbyState.Loading
-        return LobbyState.Playing
+        if (gameStartedAt == null) return LobbyState.Confirmed
+        if (activeGame == null) return LobbyState.Loading
+        else return LobbyState.Playing
     }
 
 enum class LobbyState {
