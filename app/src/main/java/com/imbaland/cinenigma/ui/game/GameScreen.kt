@@ -31,6 +31,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.imbaland.movies.ui.widget.MoviePoster
+import com.imbaland.movies.ui.widget.TextSelector
 
 fun NavGraphBuilder.gameRoute(
     route: String,
@@ -44,7 +45,7 @@ fun NavGraphBuilder.gameRoute(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+//@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun GameScreen(
     viewModel: GameViewModel
@@ -93,10 +94,14 @@ fun GameScreen(
                     }
                     when (state) {
                         is Hinter.Hinting -> {
-                            MoviePoster(
+//                            MoviePoster(
+//                                modifier = Modifier.fillMaxWidth(0.7f),
+//                                imageUrl = state.game.movie?.image ?: ""
+//                            )
+                            TextSelector(
                                 modifier = Modifier.fillMaxWidth(0.7f),
-                                imageUrl = state.game.movie?.image ?: ""
-                            )
+                                text = state.game.movie?.overview?:"none lol",
+                                filter = { selection -> state.game.movie?.title?.contains(selection) != true })
                         }
 
                         is Hinter.Waiting -> {

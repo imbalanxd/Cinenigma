@@ -12,6 +12,7 @@ import com.imbaland.cinenigma.domain.remote.CinenigmaFirestore
 import com.imbaland.cinenigma.ui.menu.IN_GAME_ARG_GAME_ID
 import com.imbaland.common.data.auth.firebase.FirebaseAuthenticator
 import com.imbaland.common.domain.Result
+import com.imbaland.movies.domain.model.MovieDetails
 import com.imbaland.movies.domain.repository.MoviesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted

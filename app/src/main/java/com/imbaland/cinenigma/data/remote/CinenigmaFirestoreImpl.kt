@@ -102,22 +102,30 @@ class CinenigmaFirestoreImpl constructor(
     override suspend fun startGame(id: String, hinter: AuthenticatedUser): Result<Unit, Error> {
         when(val result = moviesRepository.discover(Random.nextInt(1, 100))) {
             is Result.Success -> {
-                val newGame = Game(
-                    movie = result.data[Random.nextInt(0, 20)],
-                    hinter = hinter)
-                val result = updateValues(
-                    "lobbies", id,
-                    listOf("gameStartedAt", "activeGame"),
-                    listOf(null, null),
-                    listOf(Date(), newGame),
-                    listOf()
-                )
-                when(result) {
-                    is Result.Success -> {
-                        return result
-                    }
+                val movie = result.data[Random.nextInt(0, 20)]
+                when(val detailsResult = moviesRepository.getMovieDetails(movie.id)) {
                     is Result.Error -> {
-                        return result
+                        return Result.Error(CinenigmaFirestoreError.GameStartError)
+                    }
+                    is Result.Success -> {
+                        val newGame = Game(
+                            movie = detailsResult.data,
+                            hinter = hinter)
+                        val result = updateValues(
+                            "lobbies", id,
+                            listOf("gameStartedAt", "activeGame"),
+                            listOf(null, null),
+                            listOf(Date(), newGame),
+                            listOf()
+                        )
+                        when(result) {
+                            is Result.Success -> {
+                                return result
+                            }
+                            is Result.Error -> {
+                                return result
+                            }
+                        }
                     }
                 }
             }
