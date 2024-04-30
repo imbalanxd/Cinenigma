@@ -59,6 +59,7 @@ dependencies {
     implementation(libs.squareup.retrofit.moshi)
     implementation(libs.squareup.okhttp3)
     implementation(libs.squareup.okhttp3.logginginterceptor)
+    debugApi(libs.androidx.compose.ui.tooling)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

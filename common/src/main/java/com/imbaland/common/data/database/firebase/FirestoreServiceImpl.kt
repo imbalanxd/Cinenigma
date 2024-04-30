@@ -98,7 +98,7 @@ abstract class FirestoreServiceImpl(
 
     suspend inline fun <reified T> watchCollection(collection: String,
                                                    filters: Map<String, Any> = mapOf(),
-                                                   exclude: Pair<String, Any>?): Flow<Result<List<T>, FirestoreError>> =
+                                                   exclude: Pair<String, Any?>?): Flow<Result<List<T>, FirestoreError>> =
         withContext(dispatcher) {
             callbackFlow {
                 var docRef = db.collection(collection).limit(20)

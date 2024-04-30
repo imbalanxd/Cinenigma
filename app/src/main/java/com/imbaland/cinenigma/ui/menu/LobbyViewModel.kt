@@ -10,6 +10,7 @@ import com.imbaland.common.domain.Result
 import com.imbaland.cinenigma.domain.remote.CinenigmaFirestore
 import com.imbaland.common.data.auth.firebase.FirebaseAuthenticator
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -151,6 +152,13 @@ class LobbyViewModel @Inject constructor(
 
                 }
             }
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        GlobalScope.launch {
+            leaveLobby()
         }
     }
 }

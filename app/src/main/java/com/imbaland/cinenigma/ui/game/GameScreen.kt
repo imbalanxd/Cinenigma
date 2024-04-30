@@ -21,7 +21,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -101,7 +104,8 @@ fun GameScreen(
                             TextSelector(
                                 modifier = Modifier.fillMaxWidth(0.7f),
                                 text = state.game.movie?.overview?:"none lol",
-                                filter = { selection -> state.game.movie?.title?.contains(selection) != true })
+                                style = TextStyle.Default.copy(fontWeight = FontWeight.Medium, lineHeight = 26.sp, fontSize = 16.sp),
+                                filter = { selection -> state.game.movie?.title?.contains(selection) != true }, maxScale = 1.0f)
                         }
 
                         is Hinter.Waiting -> {

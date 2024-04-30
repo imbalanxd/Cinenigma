@@ -14,7 +14,7 @@ interface CinenigmaFirestore {
      * Menu Navs
      */
     suspend fun getLobbies(): Result<List<Lobby>, FirestoreError>
-    suspend fun watchLobbies(filters: Map<String, Any> = mapOf(), exclude: Pair<String, Any>? = null): Flow<Result<List<Lobby>, FirestoreError>>
+    suspend fun watchLobbies(filters: Map<String, Any> = mapOf(), exclude: Pair<String, Any?>? = null): Flow<Result<List<Lobby>, FirestoreError>>
     suspend fun getLobby(id: String): Result<Lobby, FirestoreError>
     suspend fun watchLobby(id: String): Flow<Result<Lobby?, FirestoreError>>
     suspend fun createLobby(title: String): Result<Lobby, FirestoreError>

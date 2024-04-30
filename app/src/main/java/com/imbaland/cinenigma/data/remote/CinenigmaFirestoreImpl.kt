@@ -29,7 +29,7 @@ class CinenigmaFirestoreImpl constructor(
 
     override suspend fun watchLobbies(
         filters: Map<String, Any>,
-        exclude: Pair<String, Any>?
+        exclude: Pair<String, Any?>?
     ): Flow<Result<List<Lobby>, FirestoreError>> {
         return watchCollection<Lobby>("lobbies", filters, exclude)
     }

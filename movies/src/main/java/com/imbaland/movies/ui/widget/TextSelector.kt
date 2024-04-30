@@ -25,20 +25,26 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.sp
+import kotlin.math.roundToInt
 
+@Preview
 @Composable
 fun TextSelector(
     modifier: Modifier = Modifier,
     text: String = "This is some test text for selecting, isn't that nice? Blah blah blah so much text",
-    style: TextStyle = TextStyle.Default.copy(fontWeight = FontWeight.Medium),
+    style: TextStyle = TextStyle.Default.copy(fontWeight = FontWeight.Medium, lineHeight = 30.sp),
     limit: Int = 4,
     maxScale: Float = 2.0f,
     highlightColor: Color = Color.Red,
     filter: (String) -> Boolean = { _ -> true }
 ) {
+    val modStyle = style.copy(lineHeightStyle = LineHeightStyle(alignment = LineHeightStyle.Alignment.Center, trim = LineHeightStyle.Trim.None))
 //    var textState by rememberSaveable {
 //        mutableStateOf(text)
 //    }
@@ -72,27 +78,30 @@ fun TextSelector(
             }
         }
 
-        val normalText = buildAnnotatedString {
-//            currentWord?.let { wordRange ->
-//                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, fontSize = 15.sp,)) {
-//                    append(text.substring(0 until wordRange.first))
-//                }
-//                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.Transparent)) {
-//                    append(text.substring(wordRange))
-//                }
-//                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, fontSize = 15.sp,)) {
-//                    append(text.substring(wordRange.last+1 until text.length))
-//                }
-//            }?:
-            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, fontSize = 15.sp)) {
-                append(text)
+        val normalText = remember(wordMap, selectedWords.value) {
+            buildAnnotatedString {
+                with(selectedWords.value.sortedBy { it.first }) {
+                    var previous = IntRange(0, 0)
+                    forEach { current ->
+                        withStyle(style = modStyle.toSpanStyle()) {
+                            append(text.substring(previous.last, current.first))
+                        }
+                        withStyle(style = modStyle.copy(color = Color.Transparent).toSpanStyle()) {
+                            append(text.substring(current.first, current.last))
+                        }
+                        previous = current
+                    }
+                    withStyle(style = modStyle.toSpanStyle()) {
+                        append(text.substring(previous.last, text.length))
+                    }
+                }
             }
         }
         Box() {
             Text(
                 onTextLayout = { layoutResult = it },
                 text = normalText,
-                style = style,
+                style = modStyle,
                 modifier = Modifier.pointerInput(wordMap) {
                     detectTapGestures(onTap = { offset ->
                         wordSelected(offset)
@@ -100,24 +109,30 @@ fun TextSelector(
                 })
             selectedWords.value.forEach { wordRange ->
                 val word = text.substring(wordRange.first..wordRange.last)
-                val offset = layoutResult?.getBoundingBox(wordRange.first)?.topLeft?.round()!!
+                val offset = layoutResult?.getBoundingBox(wordRange.first)?.topLeft?.round()!!.plus(
+                    IntOffset(0, 0)
+                )
                 FloatingTextSelection(
                     modifier = Modifier.offset { offset },
                     text = word,
-                    style = style
+                    style = modStyle,
+                    startScale = 1.0f,
+                    targetScale = maxScale
                 )
             }
         }
     }
 }
-
+@Preview
 @Composable
 fun FloatingTextSelection(
-    modifier: Modifier,
-    text: String,
-    style: TextStyle
+    modifier: Modifier = Modifier,
+    text: String = "Text",
+    style: TextStyle = TextStyle.Default.copy(fontWeight = FontWeight.Medium, lineHeight = 30.sp),
+    startScale: Float = 1f,
+    targetScale: Float = 2f
 ) {
-    var fontSize by remember { mutableFloatStateOf(1f) }
+    var fontSize by remember { mutableFloatStateOf(startScale) }
     val fontScale: Float by animateFloatAsState(
         targetValue = fontSize, animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
@@ -125,7 +140,7 @@ fun FloatingTextSelection(
         )
     )
     LaunchedEffect(Unit) {
-        fontSize = 1.8f
+        fontSize = targetScale
     }
     Text(
         modifier = modifier.scale(fontScale),
