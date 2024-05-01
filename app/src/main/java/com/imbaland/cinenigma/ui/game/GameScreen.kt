@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
@@ -104,7 +105,7 @@ fun GameScreen(
                             TextSelector(
                                 modifier = Modifier.fillMaxWidth(0.7f),
                                 text = state.game.movie?.overview?:"none lol",
-                                style = TextStyle.Default.copy(fontWeight = FontWeight.Medium, lineHeight = 26.sp, fontSize = 16.sp),
+                                style = TextStyle.Default.copy(fontWeight = FontWeight.Medium, lineHeight = 26.sp, fontSize = 16.sp, textAlign = TextAlign.Center),
                                 filter = { selection -> state.game.movie?.title?.contains(selection) != true }, maxScale = 1.0f)
                         }
 
