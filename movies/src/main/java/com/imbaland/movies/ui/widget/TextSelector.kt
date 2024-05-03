@@ -6,7 +6,6 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,45 +21,85 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextGeometricTransform
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.sp
-import kotlin.math.roundToInt
 
 @Preview
 @Composable
 fun TextSelector(
     modifier: Modifier = Modifier,
     text: String = "This is some test text for selecting, isn't that nice? Blah blah blah so much text",
-    style: TextStyle = TextStyle.Default.copy(fontWeight = FontWeight.Medium, lineHeight = 30.sp, fontSize = 15.sp),
+    style: TextStyle = TextStyle.Default.copy(
+        fontWeight = FontWeight.Medium,
+        lineHeight = 30.sp,
+        fontSize = 15.sp
+    ),
     limit: Int = 4,
     maxScale: Float = 1.8f,
     highlightColor: Color = Color.Red,
-    filter: (String) -> Boolean = { _ -> true }
+    filter: (String) -> Boolean = { block -> block != "some" }
 ) {
-    val modStyle = style.copy(lineHeightStyle = LineHeightStyle(alignment = LineHeightStyle.Alignment.Center, trim = LineHeightStyle.Trim.None))
+    val normalStyle = style.copy(
+        lineHeightStyle = LineHeightStyle(
+            alignment = LineHeightStyle.Alignment.Center,
+            trim = LineHeightStyle.Trim.None
+        )
+    )
+    val selectedStyle = normalStyle.copy(
+        textGeometricTransform = TextGeometricTransform(
+            scaleX = maxScale
+        ), color = Color.Transparent
+    )
+    val disabledStyle = normalStyle.copy(color = normalStyle.color.copy(alpha = 0.5f))
 
+    val selectedWordsMap = rememberSaveable(text) {
+        mutableStateOf(mapOf<IntRange, SelectionType>())
+    }
     val wordMap = rememberSaveable(text) {
         "(\\w+)".toRegex().findAll(text).associateBy { result -> result.range }
-            .filter { filter(it.value.value) }
+            .filter {
+                if(!filter(it.value.value)) {
+                    selectedWordsMap.value += mapOf(it.key to SelectionType.DISABLED)
+                    false
+                }
+                else {
+                    true
+                }
+            }
+    }
+    var stateTextState by remember(text) {
+        mutableStateOf(buildAnnotatedString {
+            with(selectedWordsMap.value.entries.sortedBy { it.key.first }) {
+                var previous = IntRange(0, 0)
+                forEach { current ->
+                    withStyle(style = normalStyle.toSpanStyle()) {
+                        append(text.substring(previous.last, current.key.first))
+                    }
+                    withSelectionType(current.value,
+                        normalStyle, selectedStyle, disabledStyle,
+                        text.substring(current.key.first, current.key.last + 1))
+                    previous = IntRange(current.key.first, current.key.last + 1)
+                }
+                withStyle(style = normalStyle.toSpanStyle()) {
+                    append(text.substring(previous.last, text.length))
+                }
+            }
+        })
     }
     Box(modifier = modifier) {
         var layoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
-        val selectedWords = rememberSaveable {
-            mutableStateOf(listOf<IntRange>())
-        }
-        fun wordSelected(selectedOffset: Offset) {
+
+        fun wordSelected(selectedOffset: Offset, disabled: Boolean = false) {
             layoutResult?.getOffsetForPosition(selectedOffset)?.let { index ->
                 wordMap.firstNotNullOfOrNull { entry -> if (entry.key.contains(index)) entry.value.range else null }
                     ?.let { wordRange ->
@@ -71,60 +110,60 @@ fun TextSelector(
                             wordRange
                         }
                     }?.let { selectedWordRange ->
-                    selectedWords.value =
-                        (selectedWords.value.find { wordRange -> wordRange == selectedWordRange }
-                            ?.let { existingWordRange ->
-                                selectedWords.value.filter { it != existingWordRange }
-                            }) ?: (selectedWords.value + listOf(selectedWordRange))
-                }
-            }
-        }
-
-        val normalText = remember(wordMap, selectedWords.value) {
-            buildAnnotatedString {
-                with(selectedWords.value.sortedBy { it.first }) {
-                    var previous = IntRange(0, 0)
-                    forEach { current ->
-                        withStyle(style = modStyle.toSpanStyle()) {
-                            append(text.substring(previous.last, current.first))
+                        var selectionType: SelectionType = if(disabled) SelectionType.DISABLED else SelectionType.SELECTED
+                        selectedWordsMap.value =
+                            (selectedWordsMap.value.entries.find { entry -> entry.key == selectedWordRange && entry.value == SelectionType.SELECTED }
+                                ?.let { _ ->
+                                    selectionType = SelectionType.NORMAL
+                                    (selectedWordsMap.value + mapOf(selectedWordRange to selectionType))
+                                }) ?: (selectedWordsMap.value + mapOf(selectedWordRange to selectionType))
+                        stateTextState = buildAnnotatedString {
+                            append(stateTextState.subSequence(0, selectedWordRange.first))
+                            withSelectionType(selectionType,
+                                normalStyle, selectedStyle, disabledStyle, stateTextState.substring(
+                                    selectedWordRange.first,
+                                    selectedWordRange.last + 1
+                                ))
+                            append(
+                                stateTextState.subSequence(
+                                    selectedWordRange.last + 1,
+                                    stateTextState.length
+                                )
+                            )
                         }
-                        withStyle(style = modStyle.copy(textGeometricTransform = TextGeometricTransform(scaleX = maxScale), color = Color.Transparent).toSpanStyle()) {
-                            append(text.substring(current.first, current.last+1))
-                        }
-                        previous = IntRange(current.first, current.last+1)
                     }
-                    withStyle(style = modStyle.toSpanStyle()) {
-                        append(text.substring(previous.last, text.length))
-                    }
-                }
             }
         }
         Box() {
             Text(
                 onTextLayout = { layoutResult = it },
-                text = normalText,
-                style = modStyle,
+                text = stateTextState,
+                style = normalStyle,
                 modifier = Modifier.pointerInput(wordMap) {
                     detectTapGestures(onTap = { offset ->
                         wordSelected(offset)
                     })
                 })
-            selectedWords.value.forEach { wordRange ->
-                val word = text.substring(wordRange.first..wordRange.last)
-                val offset = layoutResult?.getBoundingBox(wordRange.first)?.topLeft?.round()!!.plus(
-                    IntOffset(0, 0)
-                )
-                FloatingTextSelection(
-                    modifier = Modifier.offset { offset },
-                    text = word,
-                    style = modStyle,
-                    startScale = 1.0f,
-                    targetScale = maxScale
-                )
+            selectedWordsMap.value.forEach { wordRangeEntry ->
+                if(wordRangeEntry.value == SelectionType.SELECTED) {
+                    val word = text.substring(wordRangeEntry.key.first..wordRangeEntry.key.last)
+                    val offset = layoutResult?.getBoundingBox(wordRangeEntry.key.first)?.topLeft?.round()!!.plus(
+                        IntOffset(0, 0)
+                    )
+                    val state = wordRangeEntry.value
+                    FloatingTextSelection(
+                        modifier = Modifier.offset { offset },
+                        text = word,
+                        style = normalStyle,
+                        startScale = if(state == SelectionType.SELECTED) 1.0f else maxScale,
+                        targetScale = if(state == SelectionType.SELECTED) maxScale else 1.0f
+                    )
+                }
             }
         }
     }
 }
+
 @Preview
 @Composable
 fun FloatingTextSelection(
@@ -146,16 +185,66 @@ fun FloatingTextSelection(
         fontSize = targetScale
     }
     Box(
-        modifier = modifier.offset{ IntOffset(((layoutResult?.size?.width?:0).div(2) * (fontScale-1f)).toInt(),0) }.scale(fontScale),
-        contentAlignment = Alignment.TopCenter,) {
+        modifier = modifier
+            .offset {
+                IntOffset(
+                    ((layoutResult?.size?.width ?: 0).div(2) * (fontScale - 1f)).toInt(), 0
+                )
+            }
+            .scale(fontScale),
+        contentAlignment = Alignment.TopCenter,
+    ) {
         Text(
             modifier = Modifier,
             onTextLayout = { layoutResult = it },
             style = style,
             color = Color.Red,
-            fontWeight = FontWeight((style.fontWeight!!.weight * fontScale).toInt().coerceAtMost(1000)),
+            fontWeight = FontWeight(
+                (style.fontWeight!!.weight * fontScale).toInt().coerceAtMost(1000)
+            ),
             text = text
         )
     }
+}
 
+fun AnnotatedString.Builder.withSelectionType(
+    selectionType: SelectionType,
+    normalStyle: TextStyle,
+    selectedStyle: TextStyle,
+    disabledStyle: TextStyle,
+    string: String) {
+    when (selectionType) {
+        SelectionType.NORMAL -> {
+            withStyle(
+                style = normalStyle.toSpanStyle()
+            ) {
+                append(
+                    string
+                )
+            }
+        }
+
+        SelectionType.SELECTED -> {
+            withStyle(
+                style = selectedStyle.toSpanStyle()
+            ) {
+                append(
+                    string
+                )
+            }
+        }
+
+        SelectionType.DISABLED -> {
+            withStyle(
+                style = disabledStyle.toSpanStyle()
+            ) {
+                append(
+                    string
+                )
+            }
+        }
+    }
+}
+enum class SelectionType {
+    NORMAL, SELECTED, DISABLED
 }

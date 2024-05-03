@@ -106,7 +106,7 @@ fun GameScreen(
                                 modifier = Modifier.fillMaxWidth(0.7f),
                                 text = state.game.movie?.overview?:"none lol",
                                 style = TextStyle.Default.copy(fontWeight = FontWeight.Medium, lineHeight = 26.sp, fontSize = 16.sp, textAlign = TextAlign.Center),
-                                filter = { selection -> state.game.movie?.title?.contains(selection) != true }, maxScale = 1.0f)
+                                filter = { selection -> state.game.movie?.title?.contains(selection) != true }, maxScale = 1.8f)
                         }
 
                         is Hinter.Waiting -> {
