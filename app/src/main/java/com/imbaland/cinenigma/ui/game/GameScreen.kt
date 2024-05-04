@@ -17,6 +17,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -83,6 +84,7 @@ fun GameScreen(
             }
 
             is Hinter -> {
+                val synopsisHint = remember{ hashMapOf<String, Unit>() }
                 Column(
                     modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -106,7 +108,11 @@ fun GameScreen(
                                 modifier = Modifier.fillMaxWidth(0.7f),
                                 text = state.game.movie?.overview?:"none lol",
                                 style = TextStyle.Default.copy(fontWeight = FontWeight.Medium, lineHeight = 26.sp, fontSize = 16.sp, textAlign = TextAlign.Center),
-                                filter = { selection -> state.game.movie?.title?.contains(selection) != true }, maxScale = 1.8f)
+                                maxScale = 1.8f,
+                                filter = { selection -> state.game.movie?.title?.contains(selection) != true },
+                                onSelected = { range, word, selected ->
+                                    if(selected) synopsisHint[word] = Unit else synopsisHint.remove(word)
+                                })
                         }
 
                         is Hinter.Waiting -> {

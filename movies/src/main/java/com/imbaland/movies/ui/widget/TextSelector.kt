@@ -47,7 +47,8 @@ fun TextSelector(
     limit: Int = 4,
     maxScale: Float = 1.8f,
     highlightColor: Color = Color.Red,
-    filter: (String) -> Boolean = { block -> block != "some" }
+    filter: (String) -> Boolean = { block -> block != "some" },
+    onSelected: (IntRange, String, Boolean) -> Unit = { _, _, _ -> }
 ) {
     val normalStyle = style.copy(
         lineHeightStyle = LineHeightStyle(
@@ -113,10 +114,11 @@ fun TextSelector(
                         var selectionType: SelectionType = if(disabled) SelectionType.DISABLED else SelectionType.SELECTED
                         selectedWordsMap.value =
                             (selectedWordsMap.value.entries.find { entry -> entry.key == selectedWordRange && entry.value == SelectionType.SELECTED }
-                                ?.let { _ ->
+                                ?.let { existingSelection ->
                                     selectionType = SelectionType.NORMAL
                                     (selectedWordsMap.value + mapOf(selectedWordRange to selectionType))
                                 }) ?: (selectedWordsMap.value + mapOf(selectedWordRange to selectionType))
+                        onSelected(selectedWordRange, text.substring(selectedWordRange), selectionType == SelectionType.SELECTED)
                         stateTextState = buildAnnotatedString {
                             append(stateTextState.subSequence(0, selectedWordRange.first))
                             withSelectionType(selectionType,
