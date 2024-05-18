@@ -1,11 +1,6 @@
 package com.imbaland.cinenigma.domain.model
 
 import com.imbaland.common.domain.auth.AuthenticatedUser
-import org.junit.experimental.categories.Categories.ExcludeCategory
-import java.time.chrono.ChronoPeriod
-import java.time.temporal.ChronoUnit
-import java.time.temporal.TemporalUnit
-import java.util.Calendar
 import java.util.Date
 
 
@@ -31,7 +26,8 @@ data class Lobby(
     val hostStartedAt: Date? = null,
     val playerStartedAt: Date? = null,
     val gameStartedAt: Date? = null,
-    val activeGame: Game? = null
+    val activeGame: Game? = null,
+    val games: List<Game> = listOf()
 ) {
 
 }

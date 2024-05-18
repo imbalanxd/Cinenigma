@@ -1,33 +1,27 @@
 package com.imbaland.cinenigma.ui.game
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.RotateLeft
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -35,7 +29,6 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.imbaland.movies.ui.widget.MoviePoster
 import com.imbaland.movies.ui.widget.TextSelector
 
 fun NavGraphBuilder.gameRoute(
@@ -55,9 +48,9 @@ fun NavGraphBuilder.gameRoute(
 fun GameScreen(
     viewModel: GameViewModel
 ) {
-    ConstraintLayout(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize()) {
         val uiState: GameUiState by viewModel.uiState.collectAsStateWithLifecycle()
-        val (loading) = createRefs()
+        Text(modifier = Modifier.align(Alignment.TopCenter), text = "In Game!")
         when (val state = uiState) {
             GameUiState.Closing -> {
 
@@ -68,6 +61,21 @@ fun GameScreen(
             }
 
             GameUiState.Loading -> {
+
+            }
+
+            is Setup.Choosing -> {
+                Column(
+                    modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    TextButton(onClick = viewModel::newGame) {
+                        Text(text = "Start Round")
+                    }
+                }
+            }
+
+            is Setup.Waiting -> {
 
             }
 
@@ -84,7 +92,7 @@ fun GameScreen(
             }
 
             is Hinter -> {
-                val synopsisHint = remember{ hashMapOf<String, Unit>() }
+                val synopsisHint = remember { hashMapOf<String, Unit>() }
                 Column(
                     modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -106,12 +114,18 @@ fun GameScreen(
 //                            )
                             TextSelector(
                                 modifier = Modifier.fillMaxWidth(0.7f),
-                                text = state.game.movie?.overview?:"none lol",
-                                style = TextStyle.Default.copy(fontWeight = FontWeight.Medium, lineHeight = 26.sp, fontSize = 16.sp, textAlign = TextAlign.Center),
+                                text = state.game.movie?.overview ?: "none lol",
+                                style = TextStyle.Default.copy(
+                                    fontWeight = FontWeight.Medium,
+                                    lineHeight = 26.sp,
+                                    fontSize = 16.sp,
+                                    textAlign = TextAlign.Center
+                                ),
                                 maxScale = 1.8f,
                                 filter = { selection -> state.game.movie?.title?.contains(selection) != true },
                                 onSelected = { range, word, selected ->
-                                    if(selected) synopsisHint[word] = Unit else synopsisHint.remove(word)
+                                    if (selected) synopsisHint[word] =
+                                        Unit else synopsisHint.remove(word)
                                 })
                         }
 

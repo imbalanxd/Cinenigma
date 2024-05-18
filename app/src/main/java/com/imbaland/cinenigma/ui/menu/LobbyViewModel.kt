@@ -100,7 +100,7 @@ class LobbyViewModel @Inject constructor(
         viewModelScope.launch {
             when (val state = uiState.value) {
                 is LobbyUiState.Countdown -> {
-                    when (cinenigmaFirestore.startGame(state.lobby.id, state.lobby.host!!)) {
+                    when (cinenigmaFirestore.startLobby(state.lobby.id)) {
                         is Result.Error -> {
 
                         }
@@ -119,7 +119,7 @@ class LobbyViewModel @Inject constructor(
         viewModelScope.launch {
             when (val state = uiState.value) {
                 is LobbyUiState.Created -> {
-                    when (cinenigmaFirestore.startLobby(state.lobby.id, isHost)) {
+                    when (cinenigmaFirestore.coordinateLobby(state.lobby.id, isHost)) {
                         is Result.Error -> {
 
                         }

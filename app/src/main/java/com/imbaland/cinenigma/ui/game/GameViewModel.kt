@@ -12,6 +12,7 @@ import com.imbaland.cinenigma.domain.remote.CinenigmaFirestore
 import com.imbaland.cinenigma.ui.menu.IN_GAME_ARG_GAME_ID
 import com.imbaland.common.data.auth.firebase.FirebaseAuthenticator
 import com.imbaland.common.domain.Result
+import com.imbaland.common.domain.auth.AuthenticatedUser
 import com.imbaland.movies.domain.model.MovieDetails
 import com.imbaland.movies.domain.repository.MoviesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,7 +30,17 @@ class GameViewModel @Inject constructor(
     private val cinenigmaFirestore: CinenigmaFirestore,
     private val moviesRepository: MoviesRepository
 ) : ViewModel() {
+    private val player: AuthenticatedUser = firebaseAuth.account!!
     private val gameId: String = savedStateHandle[IN_GAME_ARG_GAME_ID]!!
+    private val Lobby.isHinter: Boolean
+        get() = when(val key = (this.id.first().code + this.games.size) % 2) {
+            0 -> {
+                this.host
+            }
+            else -> {
+                this.player
+            }
+        }?.id == (firebaseAuth.account?.id?:-1)
     val uiState: StateFlow<GameUiState> = flow {
         cinenigmaFirestore.watchLobby(gameId).collect { result ->
             when(result) {
@@ -37,13 +48,13 @@ class GameViewModel @Inject constructor(
                 is Result.Success -> {
                     val lobby = result.data!!
                     when (lobby.state) {
+                        LobbyState.Loading -> {
+                            emit(if(lobby.isHinter) Setup.Choosing(lobby) else Setup.Waiting(lobby))
+                        }
                         LobbyState.Playing -> {
                             val game = lobby.activeGame!!
                             val isHinter = game.isHinter(firebaseAuth.account!!.id)
                             when(game.state) {
-                                is Game.State.Loading -> {
-                                    emit(GameUiState.Loading)
-                                }
                                 is Game.State.Hinting -> {
                                     emit(if(isHinter) Hinter.Hinting(lobby, lobby.activeGame!!) else Guesser.Waiting(lobby, lobby.activeGame!!))
                                 }
@@ -70,9 +81,9 @@ class GameViewModel @Inject constructor(
 
     fun newGame() {
         when(val state = uiState.value) {
-            is Hinter.Hinting -> {
+            is Hinter.Hinting, is Setup.Choosing -> {
                 viewModelScope.launch {
-                    cinenigmaFirestore.startGame(gameId, state.game.hinter!!)
+                    cinenigmaFirestore.startGame(gameId, player)
                 }
             }
             else -> {
@@ -86,6 +97,11 @@ sealed class GameUiState {
     data object Loading : GameUiState()
     sealed class Playing(open val lobby: Lobby, open val game: Game) : GameUiState()
     data object Closing : GameUiState()
+}
+
+sealed class Setup(open val lobby: Lobby): GameUiState() {
+    data class Choosing(override val lobby: Lobby): Setup(lobby)
+    data class Waiting(override val lobby: Lobby): Setup(lobby)
 }
 sealed class Guesser(lobby: Lobby, game: Game, open val remaining: Int = game.currentRound.timeRemaining): GameUiState.Playing(lobby, game) {
     data class Waiting(override val lobby: Lobby, override val game: Game): Guesser(lobby, game)

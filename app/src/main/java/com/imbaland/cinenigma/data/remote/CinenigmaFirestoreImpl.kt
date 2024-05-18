@@ -87,7 +87,7 @@ class CinenigmaFirestoreImpl constructor(
             )
         } ?: return Result.Error(CinenigmaFirestoreError.InvalidUserError)
     }
-    override suspend fun startLobby(id: String, isHost: Boolean): Result<Unit, Error> {
+    override suspend fun coordinateLobby(id: String, isHost: Boolean): Result<Unit, Error> {
         return updateValues(
             "lobbies", id,
             listOf(if(isHost) "hostStartedAt" else "playerStartedAt"),
@@ -96,6 +96,15 @@ class CinenigmaFirestoreImpl constructor(
                 add(Calendar.SECOND, 5)
                 time
             }),
+            listOf()
+        )
+    }
+    override suspend fun startLobby(id: String): Result<Unit, Error> {
+        return updateValues(
+            "lobbies", id,
+            listOf("gameStartedAt"),
+            listOf(null),
+            listOf(Date()),
             listOf()
         )
     }

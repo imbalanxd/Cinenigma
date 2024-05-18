@@ -182,6 +182,24 @@ abstract class FirestoreServiceImpl(
         }
     }
 
+
+    suspend inline fun <reified T : Any> addListValue(
+        destination: String,
+        name: String,
+        child: String,
+        data: T) {
+        val document = db.collection(destination).document(name)
+        document.update(child, FieldValue.arrayUnion(listOf(data)))
+    }
+    suspend inline fun <reified T : Any> addListValue(
+        destination: String,
+        name: String,
+        child: String,
+        data: List<T>) {
+        val document = db.collection(destination).document(name)
+        document.update(child, FieldValue.arrayUnion(data))
+    }
+
     suspend fun updateValues(
         destination: String,
         name: String,
@@ -192,7 +210,6 @@ abstract class FirestoreServiceImpl(
     ): Result<Unit, Error> = withContext(dispatcher) {
         suspendCancellableCoroutine { cont ->
             data class FirestoreUpdateError(val error: Error) : Exception()
-
             val document = db.collection(destination).document(name)
             db.runTransaction { transaction ->
                 val snapshot = transaction.get(document)
