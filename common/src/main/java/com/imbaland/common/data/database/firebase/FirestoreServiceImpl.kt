@@ -98,7 +98,7 @@ abstract class FirestoreServiceImpl(
 
     suspend inline fun <reified T> watchCollection(collection: String,
                                                    filters: Map<String, Any> = mapOf(),
-                                                   exclude: Pair<String, Any?>?): Flow<Result<List<T>, FirestoreError>> =
+                                                   exclude: Pair<String, Any?>? = null): Flow<Result<List<T>, FirestoreError>> =
         withContext(dispatcher) {
             callbackFlow {
                 var docRef = db.collection(collection).limit(20)
@@ -182,6 +182,22 @@ abstract class FirestoreServiceImpl(
         }
     }
 
+    suspend fun deleteData(
+        destination: String,
+        name: String,
+    ): Result<Unit, DatabaseError> = withContext(dispatcher) {
+        suspendCancellableCoroutine { cont ->
+            db.collection(destination).document(name)
+                .delete()
+                .addOnSuccessListener {
+                    logDebug("Firestore document ($destination) deleted\n")
+                    cont.resume(Result.Success(Unit))
+                }.addOnFailureListener {
+                    logDebug("Firestore document ($destination) delete failed\n")
+                    cont.resume(Result.Error(DatabaseError.GENERAL_ERROR))
+                }
+        }
+    }
 
     suspend inline fun <reified T : Any> addListValue(
         destination: String,

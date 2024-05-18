@@ -16,8 +16,10 @@ import com.imbaland.common.domain.auth.AuthenticatedUser
 import com.imbaland.movies.domain.model.MovieDetails
 import com.imbaland.movies.domain.repository.MoviesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -32,84 +34,140 @@ class GameViewModel @Inject constructor(
 ) : ViewModel() {
     private val player: AuthenticatedUser = firebaseAuth.account!!
     private val gameId: String = savedStateHandle[IN_GAME_ARG_GAME_ID]!!
-    private val Lobby.isHinter: Boolean
-        get() = when(val key = (this.id.first().code + this.games.size) % 2) {
-            0 -> {
+    private val Game.isHinter: Boolean
+        get() = this.hinter?.id == player.id
+    private val Lobby.firstHinter: Boolean
+        get() = when (val key =
+            (this.gameStartedAt!!.toInstant().epochSecond) % 2) {
+            0L -> {
                 this.host
             }
+
             else -> {
                 this.player
             }
-        }?.id == (firebaseAuth.account?.id?:-1)
-    val uiState: StateFlow<GameUiState> = flow {
+        }?.id == (firebaseAuth.account?.id ?: -1)
+
+    val lobbyState: Flow<Lobby?> = flow {
         cinenigmaFirestore.watchLobby(gameId).collect { result ->
-            when(result) {
-                is Result.Error -> emit(GameUiState.Error(GameError.GeneralGameError))
+            when (result) {
+                is Result.Error -> emit(null)
                 is Result.Success -> {
-                    val lobby = result.data!!
-                    when (lobby.state) {
-                        LobbyState.Loading -> {
-                            emit(if(lobby.isHinter) Setup.Choosing(lobby) else Setup.Waiting(lobby))
+                    emit(result.data)
+                }
+            }
+        }
+    }
+    val lobbyGames: Flow<List<Game>> = flow {
+        cinenigmaFirestore.watchGames(gameId).collect { result ->
+            when (result) {
+                is Result.Error -> emit(listOf())
+                is Result.Success -> {
+                    emit(result.data)
+                }
+            }
+        }
+    }
+
+    val uiState: StateFlow<GameUiState> = combine(lobbyState, lobbyGames) { lobby, games ->
+        when (lobby?.state) {
+            LobbyState.Started -> {
+                val currentGame = games.lastOrNull()
+                when (currentGame?.state) {
+                    null, is Game.State.Completed -> {
+                        val isHinter = lobby.firstHinter
+                        if (isHinter) {
+                            Setup.Choosing(lobby, games)
+                        } else {
+                            Setup.Waiting(lobby, games)
                         }
-                        LobbyState.Playing -> {
-                            val game = lobby.activeGame!!
-                            val isHinter = game.isHinter(firebaseAuth.account!!.id)
-                            when(game.state) {
-                                is Game.State.Hinting -> {
-                                    emit(if(isHinter) Hinter.Hinting(lobby, lobby.activeGame!!) else Guesser.Waiting(lobby, lobby.activeGame!!))
-                                }
-                                is Game.State.Guessing -> {
-                                    emit(if(isHinter) Hinter.Waiting(lobby, lobby.activeGame!!) else Guesser.Guessing(lobby, lobby.activeGame!!))
-                                }
-                                else -> {
-                                    emit(GameUiState.Loading)
+                    }
+
+                    else -> {
+                        val isHinter = currentGame.isHinter
+                        when (currentGame.state) {
+                            is Game.State.Hinting -> {
+                                if (isHinter) {
+                                    Hinter.Hinting(lobby, games)
+                                } else {
+                                    Guesser.Waiting(lobby, games)
                                 }
                             }
-                        }
-                        else -> {
-                            emit(GameUiState.Loading)
+
+                            is Game.State.Guessing -> {
+                                if (isHinter) {
+                                    Hinter.Waiting(lobby, games)
+                                } else {
+                                    Guesser.Guessing(lobby, games)
+                                }
+                            }
+
+                            else -> {
+                                GameUiState.Loading
+                            }
                         }
                     }
                 }
             }
+
+            else -> {
+                GameUiState.Closing
+            }
         }
-    }.stateIn(
-        scope = viewModelScope,
-        initialValue = GameUiState.Loading,
-        started = SharingStarted.WhileSubscribed(5_000),
-    )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GameUiState.Loading)
 
     fun newGame() {
-        when(val state = uiState.value) {
+        when (val state = uiState.value) {
             is Hinter.Hinting, is Setup.Choosing -> {
                 viewModelScope.launch {
-                    cinenigmaFirestore.startGame(gameId, player)
+                    cinenigmaFirestore.startGame(gameId, (state as GameUiState.Playing).games.size, player)
                 }
             }
+
             else -> {
 
             }
         }
     }
 }
+
 sealed class GameUiState {
     data class Error(val error: GameError) : GameUiState()
     data object Loading : GameUiState()
-    sealed class Playing(open val lobby: Lobby, open val game: Game) : GameUiState()
+    sealed class Playing(open val lobby: Lobby, open val games: List<Game>) : GameUiState()
     data object Closing : GameUiState()
 }
 
-sealed class Setup(open val lobby: Lobby): GameUiState() {
-    data class Choosing(override val lobby: Lobby): Setup(lobby)
-    data class Waiting(override val lobby: Lobby): Setup(lobby)
+sealed class Setup(lobby: Lobby, games: List<Game>) : GameUiState.Playing(lobby, games) {
+    data class Choosing(override val lobby: Lobby, override val games: List<Game>) :
+        Setup(lobby, games)
+
+    data class Waiting(override val lobby: Lobby, override val games: List<Game>) :
+        Setup(lobby, games)
 }
-sealed class Guesser(lobby: Lobby, game: Game, open val remaining: Int = game.currentRound.timeRemaining): GameUiState.Playing(lobby, game) {
-    data class Waiting(override val lobby: Lobby, override val game: Game): Guesser(lobby, game)
-    data class Guessing(override val lobby: Lobby, override val game: Game): Guesser(lobby, game)
+
+sealed class Guesser(
+    lobby: Lobby, games: List<Game>,
+    val currentGame: Game = games.last(),
+    open val remaining: Int = currentGame.currentRound.timeRemaining
+) : GameUiState.Playing(lobby, games) {
+    data class Waiting(override val lobby: Lobby, override val games: List<Game>) :
+        Guesser(lobby, games)
+
+    data class Guessing(override val lobby: Lobby, override val games: List<Game>) :
+        Guesser(lobby, games)
 }
-sealed class Hinter(lobby: Lobby, game: Game, open val remaining: Int = game.currentRound.timeRemaining): GameUiState.Playing(lobby, game) {
-    data class Waiting(override val lobby: Lobby, override val game: Game): Hinter(lobby, game)
-    data class Hinting(override val lobby: Lobby, override val game: Game): Hinter(lobby, game)
+
+sealed class Hinter(
+    lobby: Lobby, games: List<Game>,
+    val currentGame: Game = games.last(),
+    open val remaining: Int = currentGame.currentRound.timeRemaining
+) : GameUiState.Playing(lobby, games) {
+    data class Waiting(override val lobby: Lobby, override val games: List<Game>) :
+        Hinter(lobby, games)
+
+    data class Hinting(override val lobby: Lobby, override val games: List<Game>) :
+        Hinter(lobby, games)
 }
 
 sealed class GameError {

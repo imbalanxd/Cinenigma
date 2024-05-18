@@ -16,6 +16,7 @@ import com.imbaland.movies.domain.repository.MoviesRepository
 import kotlinx.coroutines.flow.Flow
 import java.util.Calendar
 import java.util.Date
+import java.util.UUID
 import kotlin.random.Random
 
 class CinenigmaFirestoreImpl constructor(
@@ -51,6 +52,7 @@ class CinenigmaFirestoreImpl constructor(
                 host = user,
                 hostUpdatedAt = Date()
             )
+            deleteData("lobbies", id)
             when (val result = writeDocument("lobbies", id, lobby)) {
                 is Result.Error -> {
                     return Result.Error(result.error)
@@ -108,7 +110,10 @@ class CinenigmaFirestoreImpl constructor(
             listOf()
         )
     }
-    override suspend fun startGame(id: String, hinter: AuthenticatedUser): Result<Unit, Error> {
+    override suspend fun watchGames(lobbyId: String): Flow<Result<List<Game>, FirestoreError>> {
+        return watchCollection<Game>("lobbies/${lobbyId}/games")
+    }
+    override suspend fun startGame(lobbyId: String, gameNumber: Int, hinter: AuthenticatedUser): Result<Unit, Error> {
         when(val result = moviesRepository.discover(Random.nextInt(1, 100))) {
             is Result.Success -> {
                 val movie = result.data[Random.nextInt(0, 20)]
@@ -120,19 +125,13 @@ class CinenigmaFirestoreImpl constructor(
                         val newGame = Game(
                             movie = detailsResult.data,
                             hinter = hinter)
-                        val result = updateValues(
-                            "lobbies", id,
-                            listOf("gameStartedAt", "activeGame"),
-                            listOf(null, null),
-                            listOf(Date(), newGame),
-                            listOf()
-                        )
-                        when(result) {
+                        val result = writeDocument("lobbies/${lobbyId}/games", gameNumber.toString(), newGame)
+                        return when(result) {
                             is Result.Success -> {
-                                return result
+                                result
                             }
                             is Result.Error -> {
-                                return result
+                                result
                             }
                         }
                     }
@@ -144,7 +143,6 @@ class CinenigmaFirestoreImpl constructor(
         }
     }
     override suspend fun startHint(lobby: Lobby, hint: Hint): Result<Unit, Error> {
-        val rounds = lobby.activeGame?.rounds
         val result = updateValues(
             "lobbies", lobby.id,
             listOf("activeGame.completed"),

@@ -114,7 +114,7 @@ fun GameScreen(
 //                            )
                             TextSelector(
                                 modifier = Modifier.fillMaxWidth(0.7f),
-                                text = state.game.movie?.overview ?: "none lol",
+                                text = state.currentGame.movie?.overview ?: "none lol",
                                 style = TextStyle.Default.copy(
                                     fontWeight = FontWeight.Medium,
                                     lineHeight = 26.sp,
@@ -122,7 +122,7 @@ fun GameScreen(
                                     textAlign = TextAlign.Center
                                 ),
                                 maxScale = 1.8f,
-                                filter = { selection -> state.game.movie?.title?.contains(selection) != true },
+                                filter = { selection -> state.currentGame.movie?.title?.contains(selection) != true },
                                 onSelected = { range, word, selected ->
                                     if (selected) synopsisHint[word] =
                                         Unit else synopsisHint.remove(word)

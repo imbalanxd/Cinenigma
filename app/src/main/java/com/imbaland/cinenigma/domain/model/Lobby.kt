@@ -26,8 +26,6 @@ data class Lobby(
     val hostStartedAt: Date? = null,
     val playerStartedAt: Date? = null,
     val gameStartedAt: Date? = null,
-    val activeGame: Game? = null,
-    val games: List<Game> = listOf()
 ) {
 
 }
@@ -47,8 +45,7 @@ val Lobby?.state: LobbyState
         if (hostStartedAt == null) return LobbyState.Full                                                           // 3 - Starting
         if (playerStartedAt == null) return LobbyState.Starting                                                     // 4 - Waiting
         if (gameStartedAt == null) return LobbyState.Confirmed
-        if (activeGame == null) return LobbyState.Loading
-        else return LobbyState.Playing
+        return LobbyState.Started
     }
 
 enum class LobbyState {
@@ -75,12 +72,7 @@ enum class LobbyState {
     Confirmed,
 
     /**
-     * Both players are in game but no movie is currently active
+     * The Lobby is now started
      */
-    Loading,
-
-    /**
-     * Both players are in game and a movie is active
-     */
-    Playing,
+    Started,
 }

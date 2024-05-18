@@ -78,7 +78,7 @@ class LobbyViewModel @Inject constructor(
                                     LobbyState.Confirmed -> {
                                         LobbyUiState.Countdown(lobby)
                                     }
-                                    LobbyState.Loading, LobbyState.Playing -> {
+                                    LobbyState.Started -> {
                                         LobbyUiState.Started(lobby)
                                     }
                                     else -> {
