@@ -98,12 +98,16 @@ abstract class FirestoreServiceImpl(
 
     suspend inline fun <reified T> watchCollection(collection: String,
                                                    filters: Map<String, Any> = mapOf(),
+                                                   greaterFilter: Map<String, Any> = mapOf(),
                                                    exclude: Pair<String, Any?>? = null): Flow<Result<List<T>, FirestoreError>> =
         withContext(dispatcher) {
             callbackFlow {
                 var docRef = db.collection(collection).limit(20)
                 filters.forEach { filter ->
                     docRef = docRef.whereEqualTo(filter.key, filter.value)
+                }
+                filters.forEach { filter ->
+                    docRef = docRef.whereGreaterThan(filter.key, filter.value)
                 }
                 docRef = exclude?.let { docRef.whereNotEqualTo(it.first, it.second) }?:docRef
                 val listener = docRef.addSnapshotListener { result, _ ->
@@ -203,9 +207,17 @@ abstract class FirestoreServiceImpl(
         destination: String,
         name: String,
         child: String,
-        data: T) {
-        val document = db.collection(destination).document(name)
-        document.update(child, FieldValue.arrayUnion(listOf(data)))
+        data: T): Result<Unit, DatabaseError> = withContext(dispatcher) {
+        suspendCancellableCoroutine { cont ->
+            val document = db.collection(destination).document(name)
+            document.update(child, FieldValue.arrayUnion(listOf(data))).addOnSuccessListener {
+                logDebug("Firestore document ($destination$name) appended \n--${T::class.java}\n--${data}")
+                cont.resume(Result.Success(Unit))
+            }.addOnFailureListener { updateValueException ->
+                logDebug("Firestore document ($destination$name) updated failed\n--${updateValueException}")
+                cont.resume(Result.Error(DatabaseError.GENERAL_ERROR))
+            }
+        }
     }
     suspend inline fun <reified T : Any> addListValue(
         destination: String,

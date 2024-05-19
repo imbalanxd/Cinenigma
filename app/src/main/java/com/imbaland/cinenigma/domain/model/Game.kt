@@ -3,9 +3,11 @@ package com.imbaland.cinenigma.domain.model
 import com.imbaland.common.domain.auth.AuthenticatedUser
 import com.imbaland.movies.domain.model.Movie
 import com.imbaland.movies.domain.model.MovieDetails
+import java.util.Date
 
 data class Game(
     val movie: MovieDetails? = null,
+    val startedAt: Date = Date(),
     val completed: Boolean = false,
     val hinter: AuthenticatedUser? = null,
     val rounds: List<GameRound> = listOf()) {

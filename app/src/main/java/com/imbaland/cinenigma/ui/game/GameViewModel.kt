@@ -72,14 +72,15 @@ class GameViewModel @Inject constructor(
     val uiState: StateFlow<GameUiState> = combine(lobbyState, lobbyGames) { lobby, games ->
         when (lobby?.state) {
             LobbyState.Started -> {
-                val currentGame = games.lastOrNull()
+                val validGames = games.filter { game -> game.startedAt.after(lobby.gameStartedAt) }
+                val currentGame = validGames.lastOrNull()
                 when (currentGame?.state) {
                     null, is Game.State.Completed -> {
                         val isHinter = lobby.firstHinter
                         if (isHinter) {
-                            Setup.Choosing(lobby, games)
+                            Setup.Choosing(lobby, validGames)
                         } else {
-                            Setup.Waiting(lobby, games)
+                            Setup.Waiting(lobby, validGames)
                         }
                     }
 
@@ -88,17 +89,17 @@ class GameViewModel @Inject constructor(
                         when (currentGame.state) {
                             is Game.State.Hinting -> {
                                 if (isHinter) {
-                                    Hinter.Hinting(lobby, games)
+                                    Hinter.Hinting(lobby, validGames)
                                 } else {
-                                    Guesser.Waiting(lobby, games)
+                                    Guesser.Waiting(lobby, validGames)
                                 }
                             }
 
                             is Game.State.Guessing -> {
                                 if (isHinter) {
-                                    Hinter.Waiting(lobby, games)
+                                    Hinter.Waiting(lobby, validGames)
                                 } else {
-                                    Guesser.Guessing(lobby, games)
+                                    Guesser.Guessing(lobby, validGames)
                                 }
                             }
 
