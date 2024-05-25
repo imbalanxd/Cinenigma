@@ -1,5 +1,7 @@
 package com.imbaland.cinenigma.ui.game
 
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,7 +18,9 @@ import com.imbaland.common.domain.auth.AuthenticatedUser
 import com.imbaland.movies.domain.model.MovieDetails
 import com.imbaland.movies.domain.repository.MoviesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -117,6 +121,9 @@ class GameViewModel @Inject constructor(
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GameUiState.Loading)
 
+    private val _searchResults: MutableStateFlow<List<String>> = MutableStateFlow(listOf())
+    val searchResults: StateFlow<List<String>> = _searchResults
+
     fun newGame() {
         when (val state = uiState.value) {
             is Hinter.Hinting, is Setup.Choosing -> {
@@ -129,6 +136,26 @@ class GameViewModel @Inject constructor(
 
             }
         }
+    }
+    fun performMovieSearch(query: String) {
+        viewModelScope.launch {
+            _searchResults.value = when(val result = moviesRepository.search(query)) {
+                is Result.Success -> {
+                    if(result.data.isEmpty()) {
+                        listOf("No matches")
+                    } else {
+                        result.data.map { movie -> movie.title }
+                    }
+                }
+                else -> {
+                    listOf("No matches")
+                }
+            }
+        }
+    }
+
+    fun submitGuess(guess: String) {
+
     }
 }
 

@@ -8,7 +8,9 @@ import com.imbaland.common.data.auth.firebase.FirebaseAuthenticator
 import com.imbaland.common.domain.Error
 import com.imbaland.common.domain.Result
 import com.imbaland.common.domain.auth.AuthenticatedUser
+import com.imbaland.movies.domain.repository.MoviesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -22,7 +24,8 @@ import javax.inject.Inject
 @HiltViewModel
 class MenuViewModel @Inject constructor(
     private val authenticator: FirebaseAuthenticator,
-    private val cinenigmaFirestore: CinenigmaFirestore
+    private val cinenigmaFirestore: CinenigmaFirestore,
+    private val moviesRepository: MoviesRepository
 ) : ViewModel() {
     val joinedLobby = MutableStateFlow<Lobby?>(null)
     val uiState: StateFlow<MenuUiState> = flow {

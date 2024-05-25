@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.RotateLeft
@@ -13,6 +14,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -23,12 +25,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.asFlow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.imbaland.movies.ui.widget.MovieAutoComplete
 import com.imbaland.movies.ui.widget.TextSelector
 
 fun NavGraphBuilder.gameRoute(
@@ -78,19 +82,21 @@ fun GameScreen(
             is Setup.Waiting -> {
 
             }
-
             is Guesser -> {
-                when (state) {
-                    is Guesser.Guessing -> {
-
-                    }
-
+                when(state) {
                     is Guesser.Waiting -> {
-
+                        Text("Waiting for the next hint")
+                    }
+                    is Guesser.Guessing -> {
+                        val movieOptions by viewModel.searchResults.collectAsState()
+                        MovieAutoComplete(
+                            modifier = Modifier.fillMaxWidth().padding(15.dp),
+                            options = movieOptions,
+                            onTextChanged = viewModel::performMovieSearch,
+                            onSubmit = viewModel::submitGuess)
                     }
                 }
             }
-
             is Hinter -> {
                 val synopsisHint = remember { hashMapOf<String, Unit>() }
                 Column(
@@ -107,30 +113,33 @@ fun GameScreen(
                         )
                     }
                     when (state) {
-                        is Hinter.Hinting -> {
+                        is Hinter -> {
+                            when(state) {
+                                is Hinter.Waiting -> {
+                                    Text("Waiting for a guess")
+                                }
+                                is Hinter.Hinting -> {
 //                            MoviePoster(
 //                                modifier = Modifier.fillMaxWidth(0.7f),
 //                                imageUrl = state.game.movie?.image ?: ""
 //                            )
-                            TextSelector(
-                                modifier = Modifier.fillMaxWidth(0.7f),
-                                text = state.currentGame.movie?.overview ?: "none lol",
-                                style = TextStyle.Default.copy(
-                                    fontWeight = FontWeight.Medium,
-                                    lineHeight = 26.sp,
-                                    fontSize = 16.sp,
-                                    textAlign = TextAlign.Center
-                                ),
-                                maxScale = 1.8f,
-                                filter = { selection -> state.currentGame.movie?.title?.contains(selection) != true },
-                                onSelected = { range, word, selected ->
-                                    if (selected) synopsisHint[word] =
-                                        Unit else synopsisHint.remove(word)
-                                })
-                        }
-
-                        is Hinter.Waiting -> {
-
+                                    TextSelector(
+                                        modifier = Modifier.fillMaxWidth(0.7f),
+                                        text = state.currentGame.movie?.overview ?: "none lol",
+                                        style = TextStyle.Default.copy(
+                                            fontWeight = FontWeight.Medium,
+                                            lineHeight = 26.sp,
+                                            fontSize = 16.sp,
+                                            textAlign = TextAlign.Center
+                                        ),
+                                        maxScale = 1.8f,
+                                        filter = { selection -> state.currentGame.movie?.title?.contains(selection) != true },
+                                        onSelected = { range, word, selected ->
+                                            if (selected) synopsisHint[word] =
+                                                Unit else synopsisHint.remove(word)
+                                        })
+                                }
+                            }
                         }
                     }
                 }

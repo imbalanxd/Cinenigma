@@ -22,6 +22,11 @@ public interface MoviesApi {
         @Query("include_video") includeVideo: Boolean = false,
         @Query("include_adult") includeAdult: Boolean = false,
         @Query("language") language: String = "en-US"): SearchResult<Movie>
+
+    @GET(value = "search/movie")
+    suspend fun search(
+        @Query("query") query: String,
+        @Query("language") language: String = "en-US"): SearchResult<Movie>
     @GET(value = "movie/top_rated")
     suspend fun topRated(@Query("page") page: Int,@Query("language") language: String = "en-US"): SearchResult<Movie>
 

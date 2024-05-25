@@ -8,5 +8,6 @@ import com.imbaland.movies.domain.model.MovieDetails
 interface MoviesRepository {
     suspend fun getMovies(page: Int): Result<List<Movie>, MovieError>
     suspend fun discover(page: Int): Result<List<Movie>, MovieError>
+    suspend fun search(query: String): Result<List<Movie>, MovieError>
     suspend fun getMovieDetails(id: Int): Result<MovieDetails, MovieError>
 }

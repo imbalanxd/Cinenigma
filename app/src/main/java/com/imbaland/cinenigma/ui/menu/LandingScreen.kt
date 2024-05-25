@@ -26,6 +26,7 @@ import com.imbaland.cinenigma.R
 import com.imbaland.cinenigma.domain.model.Lobby
 import com.imbaland.cinenigma.ui.MainActivityUiState
 import com.imbaland.common.ui.util.sharedViewModel
+import com.imbaland.movies.ui.widget.MovieAutoComplete
 import com.imbaland.movies.ui.widget.MoviePoster
 
 fun NavGraphBuilder.landingRoute(route: String, navController: NavController) {

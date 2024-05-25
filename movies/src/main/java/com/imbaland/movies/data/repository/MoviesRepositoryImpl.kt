@@ -22,18 +22,6 @@ class MoviesRepositoryImpl @Inject constructor(
         } else {
             Result.Success(result.results)
         }
-//        when(val result = moviesRemoteService.api.topRated()) {
-//            is Result.Error -> {
-//                Result.Error(MovieError.GeneralMovieError)
-//            }
-//            is Result.Success -> {
-//                if(result.data.results.isEmpty()) {
-//                    Result.Error(MovieError.NoMoviesFoundError)
-//                } else {
-//                    Result.Success(result.data.results)
-//                }
-//            }
-//        }
     }
     override suspend fun discover(page: Int): Result<List<Movie>, MovieError> = withContext(dispatcher) {
         val result = moviesRemoteService.api.discover(page)
@@ -44,16 +32,17 @@ class MoviesRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun search(query: String): Result<List<Movie>, MovieError> = withContext(dispatcher) {
+        val result = moviesRemoteService.api.search(query)
+        if(result.results.isEmpty()) {
+            Result.Error(MovieError.NoMoviesFoundError)
+        } else {
+            Result.Success(result.results.filter { movie -> movie.original_language.contains("en") }.distinctBy { it.title })
+        }
+    }
+
     override suspend fun getMovieDetails(id: Int): Result<MovieDetails, MovieError> = withContext(dispatcher)  {
         Result.Success(moviesRemoteService.api.details(id))
-//        when(val result = moviesRemoteService.api.details(id)) {
-//            is Result.Error -> {
-//                Result.Error(MovieError.GeneralMovieError)
-//            }
-//            is Result.Success -> {
-//                Result.Success(result.data)
-//            }
-//        }
     }
 }
 
