@@ -142,18 +142,13 @@ class CinenigmaFirestoreImpl constructor(
             }
         }
     }
-    override suspend fun startHint(lobby: Lobby, hint: Hint): Result<Unit, Error> {
-        val result = updateValues(
-            "lobbies", lobby.id,
-            listOf("activeGame.completed"),
-            listOf(false),
-            listOf(true),
-            listOf()
-        )
+    override suspend fun submitHint(lobbyId: String, gameNumber: Int, hint: Hint): Result<Unit, Error> {
+        val result = addListValue("lobbies/${lobbyId}/games/", "$gameNumber","hints", hint)
         return result
     }
 
-    override suspend fun startGuess(lobby: Lobby, hint: Guess): Result<Unit, Error> {
-        TODO("Not yet implemented")
+    override suspend fun submitGuess(lobbyId: String, gameNumber: Int, guess: Guess): Result<Unit, Error> {
+        val result = addListValue("lobbies/${lobbyId}/games/", "$gameNumber","guesses", guess)
+        return result
     }
 }

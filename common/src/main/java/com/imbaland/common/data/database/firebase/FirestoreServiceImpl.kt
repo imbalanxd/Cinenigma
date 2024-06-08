@@ -210,7 +210,7 @@ abstract class FirestoreServiceImpl(
         data: T): Result<Unit, DatabaseError> = withContext(dispatcher) {
         suspendCancellableCoroutine { cont ->
             val document = db.collection(destination).document(name)
-            document.update(child, FieldValue.arrayUnion(listOf(data))).addOnSuccessListener {
+            document.update(child, FieldValue.arrayUnion(data)).addOnSuccessListener {
                 logDebug("Firestore document ($destination$name) appended \n--${T::class.java}\n--${data}")
                 cont.resume(Result.Success(Unit))
             }.addOnFailureListener { updateValueException ->
@@ -219,14 +219,14 @@ abstract class FirestoreServiceImpl(
             }
         }
     }
-    suspend inline fun <reified T : Any> addListValue(
-        destination: String,
-        name: String,
-        child: String,
-        data: List<T>) {
-        val document = db.collection(destination).document(name)
-        document.update(child, FieldValue.arrayUnion(data))
-    }
+//    suspend inline fun <reified T : Any> addListValue(
+//        destination: String,
+//        name: String,
+//        child: String,
+//        data: List<T>) {
+//        val document = db.collection(destination).document(name)
+//        document.update(child, FieldValue.arrayUnion(data))
+//    }
 
     suspend fun updateValues(
         destination: String,

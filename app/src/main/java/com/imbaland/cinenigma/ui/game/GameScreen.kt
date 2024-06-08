@@ -19,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -32,6 +33,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.imbaland.cinenigma.R
 import com.imbaland.movies.ui.widget.MovieAutoComplete
 import com.imbaland.movies.ui.widget.TextSelector
 
@@ -98,7 +100,7 @@ fun GameScreen(
                 }
             }
             is Hinter -> {
-                val synopsisHint = remember { hashMapOf<String, Unit>() }
+                val synopsisHint = remember { mutableListOf<Pair<String, IntRange>>() }
                 Column(
                     modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -109,6 +111,15 @@ fun GameScreen(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.RotateLeft,
+                            contentDescription = "Localized description"
+                        )
+                    }
+                    IconButton(
+                        modifier = Modifier.size(30.dp),
+                        onClick = { viewModel.submitHint(synopsisHint.last()) }
+                    ) {
+                        Icon(
+                            painter = painterResource(com.imbaland.movies.R.drawable.ic_confirm),
                             contentDescription = "Localized description"
                         )
                     }
@@ -135,8 +146,10 @@ fun GameScreen(
                                         maxScale = 1.8f,
                                         filter = { selection -> state.currentGame.movie?.title?.contains(selection) != true },
                                         onSelected = { range, word, selected ->
-                                            if (selected) synopsisHint[word] =
-                                                Unit else synopsisHint.remove(word)
+                                            if (selected)
+                                                synopsisHint.add(Pair(word, range))
+                                            else
+                                                synopsisHint.removeIf { pair -> pair.second == range }
                                         })
                                 }
                             }

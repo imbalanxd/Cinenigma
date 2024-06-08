@@ -28,8 +28,8 @@ interface CinenigmaFirestore {
      * Game Navs
      */
     suspend fun watchGames(lobbyId: String): Flow<Result<List<Game>, FirestoreError>>
-    suspend fun startHint(lobby: Lobby, hint: Hint = Hint.Holder): Result<Unit, Error>
-    suspend fun startGuess(lobby: Lobby, hint: Guess = Guess.Holder): Result<Unit, Error>
+    suspend fun submitHint(lobbyId: String, gameNumber: Int, hint: Hint): Result<Unit, Error>
+    suspend fun submitGuess(lobbyId: String, gameNumber: Int, guess: Guess): Result<Unit, Error>
 }
 
 sealed class CinenigmaFirestoreError: FirestoreError() {

@@ -1,11 +1,11 @@
 package com.imbaland.cinenigma.ui.game
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.imbaland.cinenigma.domain.model.Game
+import com.imbaland.cinenigma.domain.model.Guess
+import com.imbaland.cinenigma.domain.model.Hint
 import com.imbaland.cinenigma.domain.model.Lobby
 import com.imbaland.cinenigma.domain.model.LobbyState
 import com.imbaland.cinenigma.domain.model.state
@@ -15,10 +15,8 @@ import com.imbaland.cinenigma.ui.menu.IN_GAME_ARG_GAME_ID
 import com.imbaland.common.data.auth.firebase.FirebaseAuthenticator
 import com.imbaland.common.domain.Result
 import com.imbaland.common.domain.auth.AuthenticatedUser
-import com.imbaland.movies.domain.model.MovieDetails
 import com.imbaland.movies.domain.repository.MoviesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -128,7 +126,7 @@ class GameViewModel @Inject constructor(
         when (val state = uiState.value) {
             is Hinter.Hinting, is Setup.Choosing -> {
                 viewModelScope.launch {
-                    cinenigmaFirestore.startGame(gameId, (state as GameUiState.Playing).games.size, player)
+                    cinenigmaFirestore.startGame(gameId, (state as GameUiState.Playing).games.size + 1, player)
                 }
             }
 
@@ -154,8 +152,20 @@ class GameViewModel @Inject constructor(
         }
     }
 
-    fun submitGuess(guess: String) {
+    fun submitHint(keywordPair: Pair<String, IntRange>) {
+        (uiState.value as? Hinter.Hinting)?.let { guessState ->
+            viewModelScope.launch {
+                cinenigmaFirestore.submitHint(lobbyId = gameId, guessState.games.size, Hint.KeywordHint(keywordPair.first, keywordPair.second.first, keywordPair.second.last))
+            }
+        }
+    }
 
+    fun submitGuess(guess: String) {
+        (uiState.value as? Guesser.Guessing)?.let { guessState ->
+            viewModelScope.launch {
+                cinenigmaFirestore.submitGuess(lobbyId = gameId, guessState.games.size, Guess.TitleGuess(guess))
+            }
+        }
     }
 }
 

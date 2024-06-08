@@ -10,14 +10,19 @@ data class Game(
     val startedAt: Date = Date(),
     val completed: Boolean = false,
     val hinter: AuthenticatedUser? = null,
-    val rounds: List<GameRound> = listOf()) {
+    val hints: List<Hint.KeywordHint>? = null,
+    val guesses: List<Guess.TitleGuess>? = null) {
     fun isHinter(userId: String): Boolean {
         return hinter?.id == userId
     }
     val round: Int
-        get() = rounds.size
+        get() = (hints?.size?:0) + (guesses?.size?:0)
     val currentRound: GameRound?
-        get() = rounds.lastOrNull()
+        get() = if(round%2 == 0) {
+                guesses?.lastOrNull()
+            } else {
+                hints?.lastOrNull()
+            }
     sealed class State(open val game: Game) {
         data class Loading(override val game: Game): State(game)
         data class Hinting(override val game: Game): State(game) {
@@ -37,10 +42,10 @@ val Game.state: Game.State
         movie == null -> {
             Game.State.Loading(this)
         }
-        currentRound is Hint || currentRound == null -> {
+        currentRound is Guess || currentRound == null -> {
             Game.State.Hinting(this)
         }
-        currentRound is Guess -> {
+        currentRound is Hint -> {
             Game.State.Guessing(this)
         }
         else -> {
