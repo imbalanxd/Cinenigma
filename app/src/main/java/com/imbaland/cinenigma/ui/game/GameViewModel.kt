@@ -78,7 +78,7 @@ class GameViewModel @Inject constructor(
                 val currentGame = validGames.lastOrNull()
                 when (currentGame?.state) {
                     null, is Game.State.Completed -> {
-                        val isHinter = lobby.firstHinter
+                        val isHinter = !lobby.firstHinter.xor((validGames.size % 2 == 0))
                         if (isHinter) {
                             Setup.Choosing(lobby, validGames)
                         } else {

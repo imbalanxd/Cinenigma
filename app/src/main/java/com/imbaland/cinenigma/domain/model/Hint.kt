@@ -69,7 +69,8 @@ sealed class Hint {
 
     data class KeywordHint(val keyword: String = "", val start: Long = 0, val end: Long = 0) : Hint()
 }
-
+val Hint.KeywordHint.range: IntRange
+    get() = IntRange(this.start.toInt(), this.end.toInt())
 enum class HintType {
     Poster, Keyword, Empty
 }

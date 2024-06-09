@@ -44,10 +44,12 @@ fun TextSelector(
         lineHeight = 30.sp,
         fontSize = 15.sp
     ),
-    limit: Int = 4,
+    limit: Int = text.length,
     maxScale: Float = 1.8f,
     highlightColor: Color = Color.Red,
     filter: (String) -> Boolean = { block -> block != "some" },
+    enabled: Boolean = true,
+    selected: List<IntRange> = listOf(),
     onSelected: (IntRange, String, Boolean) -> Unit = { _, _, _ -> }
 ) {
     val normalStyle = style.copy(
@@ -78,6 +80,7 @@ fun TextSelector(
                 }
             }
     }
+    selectedWordsMap.value += selected.associateWith { SelectionType.FORCED }
     var stateTextState by remember(text) {
         mutableStateOf(buildAnnotatedString {
             with(selectedWordsMap.value.entries.sortedBy { it.key.first }) {
@@ -113,12 +116,12 @@ fun TextSelector(
                     }?.let { selectedWordRange ->
                         var selectionType: SelectionType = if(disabled) SelectionType.DISABLED else SelectionType.SELECTED
                         selectedWordsMap.value =
-                            (selectedWordsMap.value.entries.find { entry -> entry.key == selectedWordRange && entry.value == SelectionType.SELECTED }
+                            (selectedWordsMap.value.entries.find { entry -> entry.key == selectedWordRange && entry.value.isFocused }
                                 ?.let { existingSelection ->
                                     selectionType = SelectionType.NORMAL
                                     (selectedWordsMap.value + mapOf(selectedWordRange to selectionType))
                                 }) ?: (selectedWordsMap.value + mapOf(selectedWordRange to selectionType))
-                        onSelected(selectedWordRange, text.substring(selectedWordRange), selectionType == SelectionType.SELECTED)
+                        onSelected(selectedWordRange, text.substring(selectedWordRange), selectionType.isFocused)
                         stateTextState = buildAnnotatedString {
                             append(stateTextState.subSequence(0, selectedWordRange.first))
                             withSelectionType(selectionType,
@@ -141,13 +144,15 @@ fun TextSelector(
                 onTextLayout = { layoutResult = it },
                 text = stateTextState,
                 style = normalStyle,
-                modifier = Modifier.pointerInput(wordMap) {
-                    detectTapGestures(onTap = { offset ->
-                        wordSelected(offset)
-                    })
-                })
+                modifier = if(enabled) {
+                    Modifier.pointerInput(wordMap) {
+                        detectTapGestures(onTap = { offset ->
+                            wordSelected(offset)
+                        })
+                    }
+                } else Modifier)
             selectedWordsMap.value.forEach { wordRangeEntry ->
-                if(wordRangeEntry.value == SelectionType.SELECTED) {
+                if(wordRangeEntry.value.isFocused) {
                     val word = text.substring(wordRangeEntry.key.first..wordRangeEntry.key.last)
                     val offset = layoutResult?.getBoundingBox(wordRangeEntry.key.first)?.topLeft?.round()!!.plus(
                         IntOffset(0, 0)
@@ -157,8 +162,8 @@ fun TextSelector(
                         modifier = Modifier.offset { offset },
                         text = word,
                         style = normalStyle,
-                        startScale = if(state == SelectionType.SELECTED) 1.0f else maxScale,
-                        targetScale = if(state == SelectionType.SELECTED) maxScale else 1.0f
+                        startScale = if(state.isFocused) 1.0f else maxScale,
+                        targetScale = if(state.isFocused) maxScale else 1.0f
                     )
                 }
             }
@@ -226,7 +231,7 @@ fun AnnotatedString.Builder.withSelectionType(
             }
         }
 
-        SelectionType.SELECTED -> {
+        SelectionType.SELECTED, SelectionType.FORCED -> {
             withStyle(
                 style = selectedStyle.toSpanStyle()
             ) {
@@ -248,5 +253,7 @@ fun AnnotatedString.Builder.withSelectionType(
     }
 }
 enum class SelectionType {
-    NORMAL, SELECTED, DISABLED
+    NORMAL, SELECTED, DISABLED, FORCED
 }
+val SelectionType.isFocused: Boolean
+    get() = this == SelectionType.SELECTED || this == SelectionType.FORCED

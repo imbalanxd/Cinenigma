@@ -2,6 +2,7 @@ package com.imbaland.movies.ui.widget
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -81,8 +82,12 @@ fun MovieAutoComplete(
                 Icon(modifier = Modifier.clickable { onSubmit(text) }, contentDescription = "Confirm", painter = painterResource(
                     R.drawable.ic_confirm), tint = Color.Green)
             }, trailingIcon = {
-                Icon(modifier = Modifier.clickable { text = "" }, contentDescription = "Cancel", painter = painterResource(
-                    R.drawable.ic_cancel), tint = Color.Red)
+                Column {
+                    Icon(modifier = Modifier.clickable { onSubmit("") }, contentDescription = "Skip", painter = painterResource(
+                        R.drawable.ic_cancel), tint = Color.Yellow)
+                    Icon(modifier = Modifier.clickable { text = "" }, contentDescription = "Cancel", painter = painterResource(
+                        R.drawable.ic_cancel), tint = Color.Red)
+                }
             },
             singleLine = false,
             label = { Text("Movie Title") },
