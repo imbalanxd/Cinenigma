@@ -152,10 +152,10 @@ class GameViewModel @Inject constructor(
         }
     }
 
-    fun submitHint(keywordPair: Pair<String, IntRange>) {
+    fun submitHint(hint: Hint) {
         (uiState.value as? Hinter.Hinting)?.let { guessState ->
             viewModelScope.launch {
-                cinenigmaFirestore.submitHint(lobbyId = gameId, guessState.games.size, Hint.KeywordHint(keywordPair.first, keywordPair.second.first, keywordPair.second.last))
+                cinenigmaFirestore.submitHint(lobbyId = gameId, guessState.games.size, hint.toRound())
             }
         }
     }

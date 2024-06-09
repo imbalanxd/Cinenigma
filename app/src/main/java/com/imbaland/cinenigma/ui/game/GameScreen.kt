@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -34,6 +35,8 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.imbaland.cinenigma.R
+import com.imbaland.cinenigma.domain.model.Guess
+import com.imbaland.cinenigma.domain.model.Hint
 import com.imbaland.movies.ui.widget.MovieAutoComplete
 import com.imbaland.movies.ui.widget.TextSelector
 
@@ -85,17 +88,31 @@ fun GameScreen(
 
             }
             is Guesser -> {
-                when(state) {
-                    is Guesser.Waiting -> {
-                        Text("Waiting for the next hint")
+                Column(
+                    modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    state.currentGame.hints?.forEach { round ->
+                        when(val hint = round.hint()) {
+                            Hint.EmptyHint -> TODO()
+                            is Hint.KeywordHint -> {
+                                KeywordHint(hint)
+                            }
+                            is Hint.PosterHint -> TODO()
+                        }
                     }
-                    is Guesser.Guessing -> {
-                        val movieOptions by viewModel.searchResults.collectAsState()
-                        MovieAutoComplete(
-                            modifier = Modifier.fillMaxWidth().padding(15.dp),
-                            options = movieOptions,
-                            onTextChanged = viewModel::performMovieSearch,
-                            onSubmit = viewModel::submitGuess)
+                    when(state) {
+                        is Guesser.Waiting -> {
+                            Text("Waiting for the next hint")
+                        }
+                        is Guesser.Guessing -> {
+                            val movieOptions by viewModel.searchResults.collectAsState()
+                            MovieAutoComplete(
+                                modifier = Modifier.fillMaxWidth().padding(15.dp),
+                                options = movieOptions,
+                                onTextChanged = viewModel::performMovieSearch,
+                                onSubmit = viewModel::submitGuess)
+                        }
                     }
                 }
             }
@@ -105,6 +122,10 @@ fun GameScreen(
                     modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    state.currentGame.guesses?.forEach { round ->
+                        GuessTitle(round)
+                    }
+                    Text(state.currentGame.movie?.title?:"")
                     IconButton(
                         modifier = Modifier.size(30.dp),
                         onClick = viewModel::newGame
@@ -116,7 +137,7 @@ fun GameScreen(
                     }
                     IconButton(
                         modifier = Modifier.size(30.dp),
-                        onClick = { viewModel.submitHint(synopsisHint.last()) }
+                        onClick = { viewModel.submitHint(synopsisHint.last().let { Hint.KeywordHint(it.first, it.second.first.toLong(), it.second.last.toLong()) }) }
                     ) {
                         Icon(
                             painter = painterResource(com.imbaland.movies.R.drawable.ic_confirm),
@@ -158,5 +179,17 @@ fun GameScreen(
                 }
             }
         }
+    }
+}
+@Composable
+fun GuessTitle(hint: Guess.TitleGuess) {
+    Box(modifier = Modifier.height(40.dp).fillMaxWidth()) {
+        Text(hint.title)
+    }
+}
+@Composable
+fun KeywordHint(hint: Hint.KeywordHint) {
+    Box(modifier = Modifier.height(40.dp).fillMaxWidth()) {
+        Text(hint.keyword)
     }
 }

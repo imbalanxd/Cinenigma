@@ -4,7 +4,7 @@ import java.time.temporal.ChronoUnit
 import java.util.Calendar
 import java.util.Date
 
-abstract class GameRound(val type: String = "round", open val endsAt: Date = Calendar.getInstance().apply {
+abstract class GameRound(open val type: String = "round", open val endsAt: Date = Calendar.getInstance().apply {
     add(
         Calendar.SECOND,
         30

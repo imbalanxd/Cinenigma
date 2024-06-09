@@ -7,7 +7,7 @@ package com.imbaland.movies.domain.model
  */
 data class MovieDetails(
     val adult: Boolean = false,
-    val backdrop_path: String = "",
+    val backdrop_path: String? = "",
     val genre_ids: List<Int> = listOf(),
     override val id: Int = 0,
     val original_language: String = "",

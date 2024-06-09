@@ -3,6 +3,7 @@ package com.imbaland.cinenigma.data.remote
 import com.imbaland.cinenigma.domain.model.Game
 import com.imbaland.cinenigma.domain.model.Guess
 import com.imbaland.cinenigma.domain.model.Hint
+import com.imbaland.cinenigma.domain.model.HintRound
 import com.imbaland.cinenigma.domain.model.Lobby
 import com.imbaland.cinenigma.domain.remote.CinenigmaFirestore
 import com.imbaland.cinenigma.domain.remote.CinenigmaFirestoreError
@@ -142,7 +143,7 @@ class CinenigmaFirestoreImpl constructor(
             }
         }
     }
-    override suspend fun submitHint(lobbyId: String, gameNumber: Int, hint: Hint): Result<Unit, Error> {
+    override suspend fun submitHint(lobbyId: String, gameNumber: Int, hint: HintRound): Result<Unit, Error> {
         val result = addListValue("lobbies/${lobbyId}/games/", "$gameNumber","hints", hint)
         return result
     }

@@ -10,7 +10,7 @@ data class Game(
     val startedAt: Date = Date(),
     val completed: Boolean = false,
     val hinter: AuthenticatedUser? = null,
-    val hints: List<Hint.KeywordHint>? = null,
+    val hints: List<HintRound>? = null,
     val guesses: List<Guess.TitleGuess>? = null) {
     fun isHinter(userId: String): Boolean {
         return hinter?.id == userId
@@ -43,9 +43,13 @@ val Game.state: Game.State
             Game.State.Loading(this)
         }
         currentRound is Guess || currentRound == null -> {
-            Game.State.Hinting(this)
+            if(movie.title == (currentRound as? Guess.TitleGuess)?.title) {
+                Game.State.Completed(this)
+            } else {
+                Game.State.Hinting(this)
+            }
         }
-        currentRound is Hint -> {
+        currentRound is HintRound -> {
             Game.State.Guessing(this)
         }
         else -> {

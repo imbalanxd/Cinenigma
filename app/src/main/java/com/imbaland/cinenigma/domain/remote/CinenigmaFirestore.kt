@@ -2,7 +2,7 @@ package com.imbaland.cinenigma.domain.remote
 
 import com.imbaland.cinenigma.domain.model.Game
 import com.imbaland.cinenigma.domain.model.Guess
-import com.imbaland.cinenigma.domain.model.Hint
+import com.imbaland.cinenigma.domain.model.HintRound
 import com.imbaland.common.domain.database.FirestoreError
 import com.imbaland.common.domain.Result
 import com.imbaland.cinenigma.domain.model.Lobby
@@ -28,7 +28,7 @@ interface CinenigmaFirestore {
      * Game Navs
      */
     suspend fun watchGames(lobbyId: String): Flow<Result<List<Game>, FirestoreError>>
-    suspend fun submitHint(lobbyId: String, gameNumber: Int, hint: Hint): Result<Unit, Error>
+    suspend fun submitHint(lobbyId: String, gameNumber: Int, hint: HintRound): Result<Unit, Error>
     suspend fun submitGuess(lobbyId: String, gameNumber: Int, guess: Guess): Result<Unit, Error>
 }
 
