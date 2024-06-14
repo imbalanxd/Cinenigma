@@ -30,17 +30,21 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
 @Composable
-fun TapDrag(modifier: Modifier, content: @Composable BoxScope.(box: Rect?) -> Unit) {
+fun TapDrag(
+    modifier: Modifier,
+    enabled: Boolean = true,
+    rect: Rect?,
+    content: @Composable BoxScope.(box: Rect?, blur: Float?) -> Unit) {
     val density = LocalDensity.current.density
-    var selecting by rememberSaveable{ mutableStateOf(false) }
+    var selecting by rememberSaveable{ mutableStateOf(rect != null) }
     var resolution by remember { mutableStateOf(Size(0f,0f)) }
-    var size by rememberSaveable { mutableFloatStateOf(resolution.minDimension.coerceAtLeast(60f)/3f) }
-    var offsetX by rememberSaveable { mutableFloatStateOf(0f) }
-    var offsetY by rememberSaveable { mutableFloatStateOf(0f) }
+    var size by rememberSaveable { mutableFloatStateOf((rect?.width)?:resolution.minDimension.coerceAtLeast(60f)/3f) }
+    var offsetX by rememberSaveable { mutableFloatStateOf((rect?.left)?:0f) }
+    var offsetY by rememberSaveable { mutableFloatStateOf((rect?.top)?:0f) }
     Box(modifier
         .pointerInput(Unit) {
             detectTransformGestures { _, pan, zoom, _ ->
-                if(selecting) {
+                if(enabled && selecting) {
                     val increase = (size * (zoom - 1)) / 2.0f
                     size += increase
                     offsetX = (offsetX + pan.x - increase)
@@ -50,17 +54,25 @@ fun TapDrag(modifier: Modifier, content: @Composable BoxScope.(box: Rect?) -> Un
         }
         .pointerInput(Unit) {
             detectTapGestures(onTap = {
-                selecting = !selecting
+                if(enabled) {
+                    selecting = !selecting
+                }
             })
         }
         .onSizeChanged { newSize ->
-            resolution = Size(newSize.width.toFloat(), newSize.height.toFloat())
-            size = resolution.minDimension.coerceAtLeast(60f)/(2f)
-            offsetX = resolution.width / (2.0f) - size / 2.0f
-            offsetY = resolution.height / (2.0f) - size / 2.0f
+            if(enabled) {
+                resolution = Size(newSize.width.toFloat(), newSize.height.toFloat())
+                size = resolution.minDimension.coerceAtLeast(60f)/(2f)
+                offsetX = resolution.width / (2.0f) - size / 2.0f
+                offsetY = resolution.height / (2.0f) - size / 2.0f
+            }
         }, contentAlignment = Alignment.TopStart) {
         val sizeDim = size
-        content(if(!selecting) null else Rect(Offset(offsetX, offsetY), Size(sizeDim, sizeDim)))
+        if(!selecting) {
+            content(null,null)
+        } else {
+            content(Rect(Offset(offsetX, offsetY), Size(sizeDim, sizeDim)),null)
+        }
         if(!resolution.isEmpty() && selecting) {
             Box(
                 Modifier

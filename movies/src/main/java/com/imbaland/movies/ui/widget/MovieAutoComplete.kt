@@ -3,6 +3,7 @@ package com.imbaland.movies.ui.widget
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,6 +19,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,11 +41,12 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 @Composable
 fun MovieAutoComplete(
     modifier: Modifier = Modifier,
-    options: List<String> = listOf(),
+    options: List<Pair<Int, String>> = listOf(),
     onTextChanged: (String) -> Unit,
-    onSubmit: (String) -> Unit
+    onSubmit: (Int) -> Unit
 ) {
     var text by remember { mutableStateOf("") }
+    var id by remember { mutableIntStateOf(-1) }
     var selectionMade by remember { mutableStateOf(false) }
 
     val expanded = remember(text) { !selectionMade && text.isNotEmpty() }
@@ -72,18 +75,18 @@ fun MovieAutoComplete(
         onExpandedChange = {},
     ) {
         TextField(
-            modifier = Modifier.menuAnchor(),
+            modifier = Modifier.menuAnchor().fillMaxWidth(),
             value = text,
             onValueChange = {
                 text = it
                 selectionMade = false
             },
             leadingIcon = {
-                Icon(modifier = Modifier.clickable { onSubmit(text) }, contentDescription = "Confirm", painter = painterResource(
+                Icon(modifier = Modifier.clickable { onSubmit(id) }, contentDescription = "Confirm", painter = painterResource(
                     R.drawable.ic_confirm), tint = Color.Green)
             }, trailingIcon = {
                 Column {
-                    Icon(modifier = Modifier.clickable { onSubmit("") }, contentDescription = "Skip", painter = painterResource(
+                    Icon(modifier = Modifier.clickable { onSubmit(-1) }, contentDescription = "Skip", painter = painterResource(
                         R.drawable.ic_cancel), tint = Color.Yellow)
                     Icon(modifier = Modifier.clickable { text = "" }, contentDescription = "Cancel", painter = painterResource(
                         R.drawable.ic_cancel), tint = Color.Red)
@@ -104,9 +107,10 @@ fun MovieAutoComplete(
             movieResults.forEach {
                 DropdownMenuItem(
                     modifier = Modifier.padding(vertical = 1.dp).background(Color.DarkGray, RoundedCornerShape(4.dp)),
-                    text = { Text(it, style = MaterialTheme.typography.bodyLarge) },
+                    text = { Text(it.second, style = MaterialTheme.typography.bodyLarge) },
                     onClick = {
-                        text = it
+                        text = it.second
+                        id = it.first
                         selectionMade = true
                     },
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,

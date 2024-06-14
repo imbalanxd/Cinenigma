@@ -15,6 +15,7 @@ import com.imbaland.cinenigma.ui.menu.IN_GAME_ARG_GAME_ID
 import com.imbaland.common.data.auth.firebase.FirebaseAuthenticator
 import com.imbaland.common.domain.Result
 import com.imbaland.common.domain.auth.AuthenticatedUser
+import com.imbaland.movies.domain.model.Movie
 import com.imbaland.movies.domain.repository.MoviesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
@@ -119,8 +120,8 @@ class GameViewModel @Inject constructor(
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GameUiState.Loading)
 
-    private val _searchResults: MutableStateFlow<List<String>> = MutableStateFlow(listOf())
-    val searchResults: StateFlow<List<String>> = _searchResults
+    private val _searchResults: MutableStateFlow<List<Movie>> = MutableStateFlow(listOf())
+    val searchResults: StateFlow<List<Movie>> = _searchResults
 
     fun newGame() {
         when (val state = uiState.value) {
@@ -140,13 +141,13 @@ class GameViewModel @Inject constructor(
             _searchResults.value = when(val result = moviesRepository.search(query)) {
                 is Result.Success -> {
                     if(result.data.isEmpty()) {
-                        listOf("No matches")
+                        listOf()
                     } else {
-                        result.data.map { movie -> movie.title }
+                        result.data
                     }
                 }
                 else -> {
-                    listOf("No matches")
+                    listOf()
                 }
             }
         }
@@ -160,10 +161,12 @@ class GameViewModel @Inject constructor(
         }
     }
 
-    fun submitGuess(guess: String) {
+    fun submitGuess(id: Int) {
         (uiState.value as? Guesser.Guessing)?.let { guessState ->
-            viewModelScope.launch {
-                cinenigmaFirestore.submitGuess(lobbyId = gameId, guessState.games.size, Guess.TitleGuess(guess))
+            _searchResults.value.find { it.id == id }?.let { selection ->
+                viewModelScope.launch {
+                    cinenigmaFirestore.submitGuess(lobbyId = gameId, guessState.games.size, Guess.MovieGuess(selection))
+                }
             }
         }
     }

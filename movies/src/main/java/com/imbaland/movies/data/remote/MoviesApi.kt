@@ -30,14 +30,9 @@ public interface MoviesApi {
     @GET(value = "movie/top_rated")
     suspend fun topRated(@Query("page") page: Int,@Query("language") language: String = "en-US"): SearchResult<Movie>
 
-    @GET(value = "https://api.themoviedb.org/3/movie/{movie_id}")
+    @GET(value = "https://api.themoviedb.org/3/movie/{movie_id}?append_to_response=credits")
     suspend fun details(@Path("movie_id") id: Int): MovieDetails
+    @GET(value = "https://api.themoviedb.org/3/person/{person_id}?append_to_response=movie_credits")
+    suspend fun personDetails(@Path("person_id") id: Int): MovieDetails
 
-
-
-//    @GET(value = "movie/top_rated?language=en-US&page=3")
-//    suspend fun topRated(): Result<SearchResult<Movie>, RootError>
-//
-//    @GET(value = "https://api.themoviedb.org/3/movie/{movie_id}")
-//    suspend fun details(@Path("movie_id") id: Int): Result<MovieDetails, RootError>
 }

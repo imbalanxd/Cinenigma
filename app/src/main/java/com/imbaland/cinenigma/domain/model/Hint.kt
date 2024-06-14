@@ -9,9 +9,10 @@ data class HintRound(
             HintType.Poster -> {
                 Hint.PosterHint(
                     data["url"] as String,
-                    data["topLeft"] as Pair<Float, Float>,
-                    data["bottomRight"] as Pair<Float, Float>,
-                    data["blurValue"] as Float
+                    (data["x"] as Double).toFloat(),
+                    (data["y"] as Double).toFloat(),
+                    (data["size"] as Double).toFloat(),
+                    (data["blurValue"] as Double).toFloat()
                 )
             }
 
@@ -50,8 +51,9 @@ sealed class Hint {
                     HintType.Poster(),
                     mapOf(
                         "url" to this.url,
-                        "topLeft" to this.topLeft,
-                        "bottomRight" to this.bottomRight,
+                        "x" to this.x,
+                        "y" to this.y,
+                        "size" to this.size,
                         "blurValue" to this.blurValue
                     )
                 )
@@ -62,8 +64,9 @@ sealed class Hint {
     data object EmptyHint : Hint()
     data class PosterHint(
         val url: String = "",
-        val topLeft: Pair<Float, Float> = 0f to 0f,
-        val bottomRight: Pair<Float, Float> = 1f to 1f,
+        val x: Float = 0f,
+        val y: Float = 0f,
+        val size: Float = 0f,
         val blurValue: Float = 1f
     ) : Hint()
 

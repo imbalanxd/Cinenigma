@@ -1,5 +1,6 @@
 package com.imbaland.cinenigma.domain.model
 
+import com.imbaland.cinenigma.domain.model.Guess.Holder.id
 import com.imbaland.common.domain.auth.AuthenticatedUser
 import com.imbaland.movies.domain.model.Movie
 import com.imbaland.movies.domain.model.MovieDetails
@@ -11,7 +12,7 @@ data class Game(
     val completed: Boolean = false,
     val hinter: AuthenticatedUser? = null,
     val hints: List<HintRound>? = null,
-    val guesses: List<Guess.TitleGuess>? = null) {
+    val guesses: List<Guess.MovieGuess>? = null) {
     fun isHinter(userId: String): Boolean {
         return hinter?.id == userId
     }
@@ -43,7 +44,7 @@ val Game.state: Game.State
             Game.State.Loading(this)
         }
         currentRound is Guess || currentRound == null -> {
-            if(movie.title == (currentRound as? Guess.TitleGuess)?.title) {
+            if(movie.id == (currentRound as? Guess.MovieGuess)?.id) {
                 Game.State.Completed(this)
             } else {
                 Game.State.Hinting(this)

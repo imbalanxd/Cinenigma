@@ -47,6 +47,7 @@ fun TextSelector(
     limit: Int = text.length,
     maxScale: Float = 1.8f,
     highlightColor: Color = Color.Red,
+    forceColor: Color = Color.Yellow,
     filter: (String) -> Boolean = { block -> block != "some" },
     enabled: Boolean = true,
     selected: List<IntRange> = listOf(),
@@ -71,11 +72,10 @@ fun TextSelector(
     val wordMap = rememberSaveable(text) {
         "(\\w+)".toRegex().findAll(text).associateBy { result -> result.range }
             .filter {
-                if(!filter(it.value.value)) {
+                if (!filter(it.value.value)) {
                     selectedWordsMap.value += mapOf(it.key to SelectionType.DISABLED)
                     false
-                }
-                else {
+                } else {
                     true
                 }
             }
@@ -89,9 +89,11 @@ fun TextSelector(
                     withStyle(style = normalStyle.toSpanStyle()) {
                         append(text.substring(previous.last, current.key.first))
                     }
-                    withSelectionType(current.value,
+                    withSelectionType(
+                        current.value,
                         normalStyle, selectedStyle, disabledStyle,
-                        text.substring(current.key.first, current.key.last + 1))
+                        text.substring(current.key.first, current.key.last + 1)
+                    )
                     previous = IntRange(current.key.first, current.key.last + 1)
                 }
                 withStyle(style = normalStyle.toSpanStyle()) {
@@ -114,21 +116,29 @@ fun TextSelector(
                             wordRange
                         }
                     }?.let { selectedWordRange ->
-                        var selectionType: SelectionType = if(disabled) SelectionType.DISABLED else SelectionType.SELECTED
+                        var selectionType: SelectionType =
+                            if (disabled) SelectionType.DISABLED else SelectionType.SELECTED
                         selectedWordsMap.value =
                             (selectedWordsMap.value.entries.find { entry -> entry.key == selectedWordRange && entry.value.isFocused }
                                 ?.let { existingSelection ->
                                     selectionType = SelectionType.NORMAL
                                     (selectedWordsMap.value + mapOf(selectedWordRange to selectionType))
-                                }) ?: (selectedWordsMap.value + mapOf(selectedWordRange to selectionType))
-                        onSelected(selectedWordRange, text.substring(selectedWordRange), selectionType.isFocused)
+                                })
+                                ?: (selectedWordsMap.value + mapOf(selectedWordRange to selectionType))
+                        onSelected(
+                            selectedWordRange,
+                            text.substring(selectedWordRange),
+                            selectionType.isFocused
+                        )
                         stateTextState = buildAnnotatedString {
                             append(stateTextState.subSequence(0, selectedWordRange.first))
-                            withSelectionType(selectionType,
+                            withSelectionType(
+                                selectionType,
                                 normalStyle, selectedStyle, disabledStyle, stateTextState.substring(
                                     selectedWordRange.first,
                                     selectedWordRange.last + 1
-                                ))
+                                )
+                            )
                             append(
                                 stateTextState.subSequence(
                                     selectedWordRange.last + 1,
@@ -144,7 +154,7 @@ fun TextSelector(
                 onTextLayout = { layoutResult = it },
                 text = stateTextState,
                 style = normalStyle,
-                modifier = if(enabled) {
+                modifier = if (enabled) {
                     Modifier.pointerInput(wordMap) {
                         detectTapGestures(onTap = { offset ->
                             wordSelected(offset)
@@ -152,18 +162,27 @@ fun TextSelector(
                     }
                 } else Modifier)
             selectedWordsMap.value.forEach { wordRangeEntry ->
-                if(wordRangeEntry.value.isFocused) {
+                if (wordRangeEntry.value.isFocused) {
                     val word = text.substring(wordRangeEntry.key.first..wordRangeEntry.key.last)
-                    val offset = layoutResult?.getBoundingBox(wordRangeEntry.key.first)?.topLeft?.round()!!.plus(
-                        IntOffset(0, 0)
-                    )
+                    val offset =
+                        layoutResult?.getBoundingBox(wordRangeEntry.key.first)?.topLeft?.round()
+                            ?.plus(
+                                IntOffset(0, 0)
+                            ) ?: IntOffset(0, 0)
                     val state = wordRangeEntry.value
                     FloatingTextSelection(
                         modifier = Modifier.offset { offset },
                         text = word,
-                        style = normalStyle,
-                        startScale = if(state.isFocused) 1.0f else maxScale,
-                        targetScale = if(state.isFocused) maxScale else 1.0f
+                        style = normalStyle.let { style ->
+                            when (wordRangeEntry.value) {
+                                SelectionType.NORMAL -> style.copy()
+                                SelectionType.SELECTED -> style.copy(color = highlightColor)
+                                SelectionType.DISABLED -> style.copy()
+                                SelectionType.FORCED -> style.copy(color = forceColor)
+                            }
+                        },
+                        startScale = if (state.isFocused) 1.0f else maxScale,
+                        targetScale = if (state.isFocused) maxScale else 1.0f
                     )
                 }
             }
@@ -176,7 +195,12 @@ fun TextSelector(
 fun FloatingTextSelection(
     modifier: Modifier = Modifier,
     text: String = "Text",
-    style: TextStyle = TextStyle.Default.copy(fontWeight = FontWeight.Medium, lineHeight = 30.sp),
+    selectionType: SelectionType = SelectionType.NORMAL,
+    style: TextStyle = TextStyle.Default.copy(
+        fontWeight = FontWeight.Medium,
+        lineHeight = 30.sp,
+        color = Color.Black
+    ),
     startScale: Float = 1f,
     targetScale: Float = 2f
 ) {
@@ -205,7 +229,6 @@ fun FloatingTextSelection(
             modifier = Modifier,
             onTextLayout = { layoutResult = it },
             style = style,
-            color = Color.Red,
             fontWeight = FontWeight(
                 (style.fontWeight!!.weight * fontScale).toInt().coerceAtMost(1000)
             ),
@@ -219,7 +242,8 @@ fun AnnotatedString.Builder.withSelectionType(
     normalStyle: TextStyle,
     selectedStyle: TextStyle,
     disabledStyle: TextStyle,
-    string: String) {
+    string: String
+) {
     when (selectionType) {
         SelectionType.NORMAL -> {
             withStyle(
@@ -252,8 +276,10 @@ fun AnnotatedString.Builder.withSelectionType(
         }
     }
 }
+
 enum class SelectionType {
     NORMAL, SELECTED, DISABLED, FORCED
 }
+
 val SelectionType.isFocused: Boolean
     get() = this == SelectionType.SELECTED || this == SelectionType.FORCED
