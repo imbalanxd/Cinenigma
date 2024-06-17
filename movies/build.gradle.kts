@@ -61,6 +61,10 @@ dependencies {
     implementation(libs.squareup.okhttp3.logginginterceptor)
     debugApi(libs.androidx.compose.ui.tooling)
 
+    // Import the BoM for the Firebase platform
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.firestore)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

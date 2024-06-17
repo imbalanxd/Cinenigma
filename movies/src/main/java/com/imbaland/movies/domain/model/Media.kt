@@ -6,4 +6,5 @@ abstract class Media(
     abstract val image: String
     abstract val id: Int
     abstract val popularity: Double
+    abstract val name: String
 }

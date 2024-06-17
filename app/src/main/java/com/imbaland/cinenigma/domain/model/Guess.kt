@@ -7,7 +7,7 @@ sealed class Guess: GameRound("Guess") {
 
     data class MovieGuess(val movie: Movie = Movie()): Guess() {
         override fun toString(): String {
-            return movie.title
+            return movie.name
         }
     }
     val MovieGuess.poster: String

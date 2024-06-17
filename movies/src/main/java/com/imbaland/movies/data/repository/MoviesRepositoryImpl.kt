@@ -37,7 +37,7 @@ class MoviesRepositoryImpl @Inject constructor(
         if(result.results.isEmpty()) {
             Result.Error(MovieError.NoMoviesFoundError)
         } else {
-            Result.Success(result.results.filter { movie -> movie.original_language.contains("en") }.distinctBy { it.title })
+            Result.Success(result.results.filter { movie -> movie.original_language.contains("en") }.distinctBy { it.name })
         }
     }
 

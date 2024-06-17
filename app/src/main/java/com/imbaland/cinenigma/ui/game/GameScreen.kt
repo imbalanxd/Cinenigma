@@ -134,7 +134,7 @@ fun GameScreen(
                             val movieOptions by viewModel.searchResults.collectAsState()
                             MovieAutoComplete(
                                 modifier = Modifier.fillMaxWidth().padding(15.dp),
-                                options = movieOptions.map { movie -> Pair(movie.id, movie.title) },
+                                options = movieOptions.map { movie -> Pair(movie.id, movie.name) },
                                 onTextChanged = viewModel::performMovieSearch,
                                 onSubmit = viewModel::submitGuess
                             )
@@ -244,7 +244,7 @@ fun GameScreen(
                                                 enabled = true,
                                                 maxScale = 1.8f,
                                                 filter = { selection ->
-                                                    state.currentGame.movie?.title?.contains(
+                                                    state.currentGame.movie?.name?.contains(
                                                         selection
                                                     ) != true
                                                 },
@@ -273,7 +273,7 @@ fun TargetDisplay(
     refresh: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = "Movie: ${movie.title}")
+        Text(text = "Movie: ${movie.name}")
         ConstraintLayout {
             val (newGame, image) = createRefs()
             Image(

@@ -24,6 +24,13 @@ data class HintRound(
                 )
             }
 
+            HintType.CastMovie -> {
+                Hint.CastMovieHint(
+                    data["cast"] as Long,
+                    data["title"] as String,
+                    data["poster"] as String
+                )
+            }
             HintType.Empty -> Hint.EmptyHint
         }
     }
@@ -58,6 +65,16 @@ sealed class Hint {
                     )
                 )
             }
+            is CastMovieHint -> {
+                HintRound(
+                    HintType.CastMovie(),
+                    mapOf(
+                        "cast" to this.cast,
+                        "title" to this.title,
+                        "poster" to this.poster,
+                    )
+                )
+            }
         }
     }
 
@@ -71,11 +88,13 @@ sealed class Hint {
     ) : Hint()
 
     data class KeywordHint(val keyword: String = "", val start: Long = 0, val end: Long = 0) : Hint()
+
+    data class CastMovieHint(val cast: Long = -1, val title: String = "", val poster: String = ""): Hint()
 }
 val Hint.KeywordHint.range: IntRange
     get() = IntRange(this.start.toInt(), this.end.toInt())
 enum class HintType {
-    Poster, Keyword, Empty
+    Poster, Keyword, CastMovie, Empty
 }
 
 operator fun HintType.invoke(): String {

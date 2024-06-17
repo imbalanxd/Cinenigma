@@ -1,5 +1,7 @@
 package com.imbaland.movies.domain.model
 
+import com.google.firebase.firestore.Exclude
+
 /**
  * Class containing only the additional details of a movie
  * This is a seperate class that can be used to add to the screen, rather than replacing the previous lite movie class
@@ -17,11 +19,12 @@ data class MovieDetails(
     val poster_path: String = "",
     val release_date: String = "",
     val title: String = "",
+    @Exclude override val name: String = title,
     val video: Boolean = false,
     val vote_average: Double = 0.0,
     val vote_count: Int = 0,
-    override val media_type: String = "movie",
-    override val image: String = "https://image.tmdb.org/t/p/w500$poster_path",
+    @Exclude override val media_type: String = "movie",
+    @Exclude override val image: String = "https://image.tmdb.org/t/p/w500$poster_path",
     val belongs_to_collection: Collection? = null,
     val budget: Int = 0,
     val genres: List<Genre> = listOf(),
@@ -34,4 +37,7 @@ data class MovieDetails(
     val spoken_languages: List<SpokenLanguage> = listOf(),
     val status: String = "",
     val tagline: String = "",
+    @Exclude val credits: Credits = Credits(),
+    val actors: List<Person> = credits.actors,
+    val director: Person? = credits.director
 ): Media()
