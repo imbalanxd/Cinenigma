@@ -18,6 +18,7 @@ data class Movie(
     val video: Boolean = false,
     val vote_average: Double = 0.0,
     val vote_count: Int = 0,
+    val department: String = "",
     override val media_type: String = "movie",
-    override val image: String = "https://image.tmdb.org/t/p/w500$poster_path"
+    override val image: String = if(poster_path.isNullOrBlank()) "" else "https://image.tmdb.org/t/p/w500$poster_path"
 ): Media()

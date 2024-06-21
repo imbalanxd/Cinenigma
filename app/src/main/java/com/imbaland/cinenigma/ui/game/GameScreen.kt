@@ -1,6 +1,5 @@
 package com.imbaland.cinenigma.ui.game
 
-import android.graphics.Rect
 import android.graphics.RectF
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -11,9 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,9 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -51,7 +45,6 @@ import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.core.graphics.toRect
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.asFlow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -63,9 +56,9 @@ import com.imbaland.cinenigma.domain.model.Guess
 import com.imbaland.cinenigma.domain.model.Guess.Holder.poster
 import com.imbaland.cinenigma.domain.model.Hint
 import com.imbaland.cinenigma.domain.model.range
-import com.imbaland.movies.domain.model.Movie
 import com.imbaland.movies.domain.model.MovieDetails
 import com.imbaland.movies.ui.widget.MovieAutoComplete
+import com.imbaland.movies.ui.widget.MovieCast
 import com.imbaland.movies.ui.widget.MoviePoster
 import com.imbaland.movies.ui.widget.TextSelector
 
@@ -184,7 +177,10 @@ fun GameScreen(
                                 }
 
                                 is Hinter.Hinting -> {
-                                    if ((state.currentGame.hints?.size ?: 0) % 2 == 1) {
+                                    if(true) {
+                                        MovieCast(modifier = Modifier.fillMaxWidth(1f).height(200.dp), cast = state.currentGame.movie!!.actors)
+                                    }
+                                    else if ((state.currentGame.hints?.size ?: 0) % 2 == 1) {
                                         MoviePoster(
                                             modifier = Modifier.fillMaxWidth(0.7f),
                                             imageUrl = state.currentGame.movie?.image ?: "",

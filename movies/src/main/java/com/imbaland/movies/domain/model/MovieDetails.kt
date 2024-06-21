@@ -24,7 +24,7 @@ data class MovieDetails(
     val vote_average: Double = 0.0,
     val vote_count: Int = 0,
     @Exclude override val media_type: String = "movie",
-    @Exclude override val image: String = "https://image.tmdb.org/t/p/w500$poster_path",
+    @Exclude override val image: String = if(poster_path.isNullOrBlank()) "" else "https://image.tmdb.org/t/p/w500$poster_path",
     val belongs_to_collection: Collection? = null,
     val budget: Int = 0,
     val genres: List<Genre> = listOf(),

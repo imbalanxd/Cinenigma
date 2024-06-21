@@ -26,11 +26,13 @@ data class HintRound(
 
             HintType.CastMovie -> {
                 Hint.CastMovieHint(
-                    data["cast"] as Long,
+                    data["castId"] as Long,
+                    data["movieId"] as Long,
                     data["title"] as String,
                     data["poster"] as String
                 )
             }
+
             HintType.Empty -> Hint.EmptyHint
         }
     }
@@ -49,7 +51,8 @@ sealed class Hint {
                     mapOf(
                         "keyword" to this.keyword,
                         "start" to this.start,
-                        "end" to this.end)
+                        "end" to this.end
+                    )
                 )
             }
 
@@ -65,11 +68,13 @@ sealed class Hint {
                     )
                 )
             }
+
             is CastMovieHint -> {
                 HintRound(
                     HintType.CastMovie(),
                     mapOf(
-                        "cast" to this.cast,
+                        "castId" to this.castId,
+                        "movieId" to this.movieId,
                         "title" to this.title,
                         "poster" to this.poster,
                     )
@@ -87,12 +92,23 @@ sealed class Hint {
         val blurValue: Float = 1f
     ) : Hint()
 
-    data class KeywordHint(val keyword: String = "", val start: Long = 0, val end: Long = 0) : Hint()
+    data class KeywordHint(
+        val keyword: String = "",
+        val start: Long = 0,
+        val end: Long = 0
+    ) : Hint()
 
-    data class CastMovieHint(val cast: Long = -1, val title: String = "", val poster: String = ""): Hint()
+    data class CastMovieHint(
+        val castId: Long = -1,
+        val movieId: Long = -1,
+        val title: String = "",
+        val poster: String = ""
+    ) : Hint()
 }
+
 val Hint.KeywordHint.range: IntRange
     get() = IntRange(this.start.toInt(), this.end.toInt())
+
 enum class HintType {
     Poster, Keyword, CastMovie, Empty
 }

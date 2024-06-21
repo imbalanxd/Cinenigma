@@ -5,6 +5,7 @@ import com.imbaland.common.domain.RootError
 import com.imbaland.movies.data.remote.MoviesRemoteService
 import com.imbaland.movies.domain.model.Movie
 import com.imbaland.movies.domain.model.MovieDetails
+import com.imbaland.movies.domain.model.Person
 import com.imbaland.movies.domain.repository.MoviesRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -42,7 +43,21 @@ class MoviesRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getMovieDetails(id: Int): Result<MovieDetails, MovieError> = withContext(dispatcher)  {
-        Result.Success(moviesRemoteService.api.details(id))
+        val details = moviesRemoteService.api.details(id)
+        val actingCredits = details.actors?.map { actor ->
+            val personDetails = getPersonDetails(actor.id)
+            if(personDetails is Result.Success) {
+                actor.copy(filmography = personDetails.data.movie_credits.actingCredits)
+            } else {
+                actor
+            }
+        }?:listOf()
+        Result.Success(details.copy(actors = actingCredits))
+    }
+
+    override suspend fun getPersonDetails(id: Int): Result<Person, MovieError> = withContext(dispatcher)  {
+        val details = moviesRemoteService.api.personDetails(id)
+        Result.Success(details)
     }
 }
 

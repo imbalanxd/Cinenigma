@@ -3,6 +3,7 @@ package com.imbaland.movies.data.remote;
 import com.imbaland.common.domain.Result
 import com.imbaland.movies.domain.model.Movie
 import com.imbaland.movies.domain.model.MovieDetails
+import com.imbaland.movies.domain.model.Person
 import com.imbaland.movies.domain.model.SearchResult
 import retrofit2.Response
 import retrofit2.Retrofit
@@ -33,6 +34,6 @@ public interface MoviesApi {
     @GET(value = "https://api.themoviedb.org/3/movie/{movie_id}?append_to_response=credits")
     suspend fun details(@Path("movie_id") id: Int): MovieDetails
     @GET(value = "https://api.themoviedb.org/3/person/{person_id}?append_to_response=movie_credits")
-    suspend fun personDetails(@Path("person_id") id: Int): MovieDetails
+    suspend fun personDetails(@Path("person_id") id: Int): Person
 
 }

@@ -1,6 +1,7 @@
 package com.imbaland.common.ui
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
@@ -15,8 +16,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Unspecified
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -24,6 +27,7 @@ import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter.State.Error
 import coil.compose.AsyncImagePainter.State.Loading
 import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import com.imbaland.common.R
 
 /**
@@ -67,4 +71,38 @@ fun DynamicAsyncImage(
             colorFilter = if (iconTint != Unspecified) ColorFilter.tint(iconTint) else null,
         )
     }
+}
+
+@Composable
+fun UrlImage(
+    modifier: Modifier = Modifier,
+    contentDescription: String? = null,
+    alignment: Alignment = Alignment.Center,
+    contentScale: ContentScale = ContentScale.Crop,
+    alpha: Float = DefaultAlpha,
+    colorFilter: ColorFilter? = null,
+    url: String,
+    placeholder: Int = R.drawable.ic_placeholder,
+    adjustSize: Boolean = true
+) {
+    Image(
+        modifier = modifier,
+        painter = if (url.isEmpty()) painterResource(
+            placeholder
+        ) else rememberAsyncImagePainter(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(url.let { if (it.isEmpty()) null else url }).let {
+                    if (!adjustSize) {
+                        it.size(coil.size.Size.ORIGINAL)
+                    } else {
+                        it
+                    }
+                }.build(),
+            placeholder = painterResource(placeholder),
+        ),
+        contentDescription = contentDescription,
+        contentScale = contentScale,
+        alpha = alpha,
+        colorFilter = colorFilter
+    )
 }
