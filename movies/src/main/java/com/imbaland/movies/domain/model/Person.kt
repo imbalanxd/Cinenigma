@@ -1,20 +1,22 @@
 package com.imbaland.movies.domain.model
 
 import com.google.firebase.firestore.Exclude
+import com.google.firebase.firestore.IgnoreExtraProperties
 
+@IgnoreExtraProperties
 data class Person(
+    override val id: Int = 0,
+    override val name: String = "",
+    override val popularity: Double = 0.0,
     val adult: Boolean = true,
     val gender: Int = 0,
-    override val id: Int = 0,
     val cast_id: Int = 0,
     val known_for_department: String? = "",
     val department: String? = "",
-    override val name: String = "",
-    override val popularity: Double = 0.0,
-    val profile_path: String? = "",
-    @Exclude override val media_type: String = "person",
-    @Exclude override val image: String = if(profile_path.isNullOrBlank()) "" else "https://image.tmdb.org/t/p/w500$profile_path",
-    @Exclude val movie_credits:MovieCredits = MovieCredits(),
+    @get:Exclude val profile_path: String? = "",
+    override val media_type: String = "person",
+    override val image: String = if(profile_path.isNullOrBlank()) "" else "https://image.tmdb.org/t/p/w500$profile_path",
+    @get:Exclude val movie_credits:MovieCredits = MovieCredits(),
     val filmography: List<Movie> = if(department == "Directing") movie_credits.directingCredits else movie_credits.actingCredits
 ): Media()
 
