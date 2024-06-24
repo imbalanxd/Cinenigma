@@ -187,11 +187,16 @@ sealed class Setup(lobby: Lobby, games: List<Game>) : GameUiState.Playing(lobby,
         Setup(lobby, games)
 }
 
-sealed class Guesser(
+sealed class ActiveGame(
     lobby: Lobby, games: List<Game>,
     val currentGame: Game = games.last(),
-    open val remaining: Int = currentGame.currentRound.timeRemaining
-) : GameUiState.Playing(lobby, games) {
+    open val remaining: Int = currentGame.currentRound.timeRemaining): GameUiState.Playing(lobby, games)
+
+sealed class Guesser(
+    lobby: Lobby, games: List<Game>,
+    currentGame: Game = games.last(),
+    remaining: Int = currentGame.currentRound.timeRemaining
+) : ActiveGame(lobby, games) {
     data class Waiting(override val lobby: Lobby, override val games: List<Game>) :
         Guesser(lobby, games)
 
@@ -201,9 +206,9 @@ sealed class Guesser(
 
 sealed class Hinter(
     lobby: Lobby, games: List<Game>,
-    val currentGame: Game = games.last(),
-    open val remaining: Int = currentGame.currentRound.timeRemaining
-) : GameUiState.Playing(lobby, games) {
+    currentGame: Game = games.last(),
+    remaining: Int = currentGame.currentRound.timeRemaining
+) : ActiveGame(lobby, games) {
     data class Waiting(override val lobby: Lobby, override val games: List<Game>) :
         Hinter(lobby, games)
 

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,10 +43,16 @@ import com.imbaland.movies.ui.util.poster
 fun MovieCast(
     modifier: Modifier = Modifier,
     cast: List<Person>,
-    onSubmit: ((Int, Int) -> Unit) = {_,_ -> }) {
-    LazyRow (modifier = modifier,) {
-        items(cast) {
-            CastMember(modifier = Modifier.padding(5.dp).clip(RoundedCornerShape(5.dp)), person = it, onSubmit = onSubmit)
+    onSubmit: ((Int, Int) -> Unit)? = null
+) {
+    LazyRow(modifier = modifier) {
+        itemsIndexed(cast) { castId, cast ->
+            CastMember(
+                modifier = Modifier.padding(5.dp).clip(RoundedCornerShape(5.dp)),
+                person = cast,
+                onSubmit = onSubmit?.let { submit ->
+                    { movieId -> submit.invoke(castId, movieId) }
+                })
         }
     }
 }
@@ -55,8 +62,19 @@ fun MovieCast(
 @Composable
 fun CastMember(
     modifier: Modifier = Modifier,
-    person: Person = Person(filmography = listOf(Movie(), Movie(), Movie(), Movie(),Movie(), Movie(), Movie(), Movie())),
-    onSubmit: ((Int, Int) -> Unit) = {_,_ -> }
+    person: Person = Person(
+        filmography = listOf(
+            Movie(),
+            Movie(),
+            Movie(),
+            Movie(),
+            Movie(),
+            Movie(),
+            Movie(),
+            Movie()
+        )
+    ),
+    onSubmit: ((Int) -> Unit)? = null
 ) {
     var selection by rememberSaveable { mutableIntStateOf(-1) }
     var selectionActive by rememberSaveable { mutableStateOf(false) }
@@ -127,7 +145,7 @@ fun CastMember(
                 start.linkTo(parent.start)
                 end.linkTo(parent.end)
             }
-            if(selectionActive) {
+            if (selectionActive) {
                 constrain(submit) {
                     top.linkTo(movieRefs[selection].top, 3.dp)
                     start.linkTo(movieRefs[selection].start, 3.dp)
@@ -169,25 +187,35 @@ fun CastMember(
         with(person.filmography) {
             repeat(size) { index ->
                 val isSelected = selection == index
-                UrlImage(modifier = Modifier.zIndex(if(isSelected) 2f else 1f).layoutId("movie$index").poster().clickable {
-                    if(selectionActive) {
-                        selectionActive = false
-                    } else {
-                        selectionActive = true
-                        selection = index
+                UrlImage(
+                    modifier = Modifier.zIndex(if (isSelected) 2f else 1f).layoutId("movie$index")
+                        .poster().clickable {
+                        if (selectionActive) {
+                            selectionActive = false
+                        } else {
+                            selectionActive = true
+                            selection = index
+                        }
                     }
-                }.clip(RoundedCornerShape(if(isSelected) 5.dp * buttonAnimationProgress else 0.dp )), url = get(index).image, contentScale = ContentScale.Crop, adjustSize = false)
+                        .clip(RoundedCornerShape(if (isSelected) 5.dp * buttonAnimationProgress else 0.dp)),
+                    url = get(index).image,
+                    contentScale = ContentScale.Crop,
+                    adjustSize = false
+                )
             }
         }
-        IconButton(
-            modifier = Modifier.layoutId("submit").size(30.dp).alpha(buttonAnimationProgress).zIndex(3f),
-            onClick = {  }
-        ) {
-            Icon(
-                modifier = Modifier,
-                painter = painterResource(R.drawable.ic_confirm),
-                contentDescription = "Localized description"
-            )
+        onSubmit?.let { submit ->
+            IconButton(
+                modifier = Modifier.layoutId("submit").size(30.dp).alpha(buttonAnimationProgress)
+                    .zIndex(3f),
+                onClick = { submit.invoke(selection) }
+            ) {
+                Icon(
+                    modifier = Modifier,
+                    painter = painterResource(R.drawable.ic_confirm),
+                    contentDescription = "Localized description"
+                )
+            }
         }
     }
 }

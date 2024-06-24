@@ -1,5 +1,8 @@
 package com.imbaland.cinenigma.domain.model
 
+import com.imbaland.movies.domain.model.Movie
+import com.imbaland.movies.domain.model.Person
+
 data class HintRound(
     override val type: String = HintType.Keyword(),
     val data: Map<String, Any> = mapOf()
@@ -27,7 +30,9 @@ data class HintRound(
             HintType.CastMovie -> {
                 Hint.CastMovieHint(
                     data["castId"] as Long,
+                    data["castCount"] as Long,
                     data["movieId"] as Long,
+                    data["movieCount"] as Long,
                     data["title"] as String,
                     data["poster"] as String
                 )
@@ -75,6 +80,8 @@ sealed class Hint {
                     mapOf(
                         "castId" to this.castId,
                         "movieId" to this.movieId,
+                        "castCount" to this.castCount,
+                        "movieCount" to this.movieCount,
                         "title" to this.title,
                         "poster" to this.poster,
                     )
@@ -100,19 +107,43 @@ sealed class Hint {
 
     data class CastMovieHint(
         val castId: Long = -1,
+        val castCount: Long = 0,
         val movieId: Long = -1,
+        val movieCount: Long = 0,
         val title: String = "",
         val poster: String = ""
     ) : Hint()
 }
 
-val Hint.KeywordHint.range: IntRange
-    get() = IntRange(this.start.toInt(), this.end.toInt())
-
 enum class HintType {
     Poster, Keyword, CastMovie, Empty
 }
+fun HintRound.toType(): HintType {
+    return when(this.hint()) {
+        is Hint.CastMovieHint -> HintType.CastMovie
+        Hint.EmptyHint -> HintType.Empty
+        is Hint.KeywordHint -> HintType.Keyword
+        is Hint.PosterHint -> HintType.Poster
+    }
+}
+
+val Hint.KeywordHint.range: IntRange
+    get() = IntRange(this.start.toInt(), this.end.toInt())
 
 operator fun HintType.invoke(): String {
     return this.name
+}
+
+fun List<Hint.CastMovieHint>.createDisplay(): List<Person> {
+    return this.firstOrNull()?.let { first ->
+        List(first.castCount.toInt()) { castId ->
+            this.filter { it.castId == castId.toLong() }.let { credits ->
+                Person(filmography = List(first.movieCount.toInt()) { movieId ->
+                    credits.find { it.movieId == movieId.toLong() }?.let { hint ->
+                        Movie(title = hint.title, image = hint.poster)
+                    }?:Movie()
+                })
+            }
+        }
+    } ?: listOf()
 }

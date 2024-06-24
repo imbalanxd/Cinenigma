@@ -2,4 +2,7 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="mauve">#FFE0B0FF</color>
+    <color name="mauve_selected">#FF9070BB</color>
+    <color name="indicator">#FFFF0000</color>
 </resources>
