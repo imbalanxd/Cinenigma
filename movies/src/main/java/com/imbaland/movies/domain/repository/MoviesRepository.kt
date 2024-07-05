@@ -8,7 +8,8 @@ import com.imbaland.movies.domain.model.Person
 
 interface MoviesRepository {
     suspend fun getMovies(page: Int): Result<List<Movie>, MovieError>
-    suspend fun discover(page: Int): Result<List<Movie>, MovieError>
+    suspend fun discover(page: Int = 1): Result<List<Movie>, MovieError>
+    suspend fun discoverRandom(count: Int = 1, range: Int = 100): Result<List<Movie>, MovieError>
     suspend fun search(query: String): Result<List<Movie>, MovieError>
     suspend fun getMovieDetails(id: Int): Result<MovieDetails, MovieError>
     suspend fun getPersonDetails(id: Int): Result<Person, MovieError>

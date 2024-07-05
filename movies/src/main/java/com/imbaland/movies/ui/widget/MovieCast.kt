@@ -5,6 +5,8 @@ import androidx.compose.animation.core.EaseOutQuart
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
@@ -33,6 +35,8 @@ import androidx.constraintlayout.compose.ConstraintSet
 import androidx.constraintlayout.compose.Dimension
 import androidx.constraintlayout.compose.ExperimentalMotionApi
 import androidx.constraintlayout.compose.MotionLayout
+import androidx.test.internal.util.LogUtil.logDebug
+import com.imbaland.common.tool.logDebug
 import com.imbaland.common.ui.UrlImage
 import com.imbaland.movies.R
 import com.imbaland.movies.domain.model.Movie
@@ -218,4 +222,15 @@ fun CastMember(
             }
         }
     }
+}
+
+@Composable
+fun MovieCastHinter(modifier: Modifier = Modifier, cast: List<Person>, onSubmit: ((Int, Int) -> Unit)?) {
+    MovieCast(modifier = modifier,
+        cast = cast,
+        onSubmit = onSubmit)
+}
+@Composable
+fun MovieCastGuesser(modifier: Modifier = Modifier, cast: List<Person>) {
+    MovieCast(modifier = modifier, cast = cast)
 }

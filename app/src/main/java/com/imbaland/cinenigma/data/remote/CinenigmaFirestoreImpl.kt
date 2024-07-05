@@ -13,6 +13,7 @@ import com.imbaland.common.domain.Error
 import com.imbaland.common.domain.Result
 import com.imbaland.common.domain.auth.AuthenticatedUser
 import com.imbaland.common.domain.database.FirestoreError
+import com.imbaland.movies.domain.model.Movie
 import com.imbaland.movies.domain.repository.MoviesRepository
 import kotlinx.coroutines.flow.Flow
 import java.util.Calendar
@@ -58,6 +59,7 @@ class CinenigmaFirestoreImpl constructor(
                 is Result.Error -> {
                     return Result.Error(result.error)
                 }
+
                 is Result.Success -> {
                     return Result.Success(lobby)
                 }
@@ -90,10 +92,11 @@ class CinenigmaFirestoreImpl constructor(
             )
         } ?: return Result.Error(CinenigmaFirestoreError.InvalidUserError)
     }
+
     override suspend fun coordinateLobby(id: String, isHost: Boolean): Result<Unit, Error> {
         return updateValues(
             "lobbies", id,
-            listOf(if(isHost) "hostStartedAt" else "playerStartedAt"),
+            listOf(if (isHost) "hostStartedAt" else "playerStartedAt"),
             listOf(null),
             listOf(Calendar.getInstance().run {
                 add(Calendar.SECOND, 5)
@@ -102,6 +105,7 @@ class CinenigmaFirestoreImpl constructor(
             listOf()
         )
     }
+
     override suspend fun startLobby(id: String): Result<Unit, Error> {
         return updateValues(
             "lobbies", id,
@@ -111,26 +115,39 @@ class CinenigmaFirestoreImpl constructor(
             listOf()
         )
     }
+
     override suspend fun watchGames(lobbyId: String): Flow<Result<List<Game>, FirestoreError>> {
         return watchCollection<Game>("lobbies/${lobbyId}/games")
     }
-    override suspend fun startGame(lobbyId: String, gameNumber: Int, hinter: AuthenticatedUser): Result<Unit, Error> {
-        when(val result = moviesRepository.discover(Random.nextInt(1, 100))) {
+
+    override suspend fun startGame(
+        lobbyId: String,
+        gameNumber: Int,
+        hinter: AuthenticatedUser
+    ): Result<Unit, Error> {
+        when (val result = moviesRepository.discover(Random.nextInt(1, 100))) {
             is Result.Success -> {
                 val movie = result.data[Random.nextInt(0, 20)]
-                when(val detailsResult = moviesRepository.getMovieDetails(movie.id)) {
+                when (val detailsResult = moviesRepository.getMovieDetails(movie.id)) {
                     is Result.Error -> {
                         return Result.Error(CinenigmaFirestoreError.GameStartError)
                     }
+
                     is Result.Success -> {
                         val newGame = Game(
                             movie = detailsResult.data,
-                            hinter = hinter)
-                        val result = writeDocument("lobbies/${lobbyId}/games", gameNumber.toString(), newGame)
-                        return when(result) {
+                            hinter = hinter
+                        )
+                        val result = writeDocument(
+                            "lobbies/${lobbyId}/games",
+                            gameNumber.toString(),
+                            newGame
+                        )
+                        return when (result) {
                             is Result.Success -> {
                                 result
                             }
+
                             is Result.Error -> {
                                 result
                             }
@@ -138,18 +155,59 @@ class CinenigmaFirestoreImpl constructor(
                     }
                 }
             }
+
             is Result.Error -> {
                 return Result.Error(CinenigmaFirestoreError.GameStartError)
             }
         }
     }
-    override suspend fun submitHint(lobbyId: String, gameNumber: Int, hint: HintRound): Result<Unit, Error> {
-        val result = addListValue("lobbies/${lobbyId}/games/", "$gameNumber","hints", hint)
+
+    override suspend fun startGame(
+        movie: Movie,
+        lobbyId: String,
+        gameNumber: Int,
+        hinter: AuthenticatedUser
+    ): Result<Unit, Error> {
+        when (val detailsResult = moviesRepository.getMovieDetails(movie.id)) {
+            is Result.Error -> {
+                return Result.Error(CinenigmaFirestoreError.GameStartError)
+            }
+
+            is Result.Success -> {
+                val newGame = Game(
+                    movie = detailsResult.data,
+                    hinter = hinter
+                )
+                val result =
+                    writeDocument("lobbies/${lobbyId}/games", gameNumber.toString(), newGame)
+                return when (result) {
+                    is Result.Success -> {
+                        result
+                    }
+
+                    is Result.Error -> {
+                        result
+                    }
+                }
+            }
+        }
+    }
+
+    override suspend fun submitHint(
+        lobbyId: String,
+        gameNumber: Int,
+        hint: HintRound
+    ): Result<Unit, Error> {
+        val result = addListValue("lobbies/${lobbyId}/games/", "$gameNumber", "hints", hint)
         return result
     }
 
-    override suspend fun submitGuess(lobbyId: String, gameNumber: Int, guess: Guess): Result<Unit, Error> {
-        val result = addListValue("lobbies/${lobbyId}/games/", "$gameNumber","guesses", guess)
+    override suspend fun submitGuess(
+        lobbyId: String,
+        gameNumber: Int,
+        guess: Guess
+    ): Result<Unit, Error> {
+        val result = addListValue("lobbies/${lobbyId}/games/", "$gameNumber", "guesses", guess)
         return result
     }
 }

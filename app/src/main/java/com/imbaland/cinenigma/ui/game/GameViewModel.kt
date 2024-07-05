@@ -81,7 +81,15 @@ class GameViewModel @Inject constructor(
                     null, is Game.State.Completed -> {
                         val isHinter = !lobby.firstHinter.xor((validGames.size % 2 == 0))
                         if (isHinter) {
-                            Setup.Choosing(lobby, validGames)
+                            val options = moviesRepository.discoverRandom(3)
+                            when(options) {
+                                is Result.Error -> {
+                                    Setup.Choosing(listOf(), lobby, validGames)
+                                }
+                                is Result.Success -> {
+                                    Setup.Choosing(options.data, lobby, validGames)
+                                }
+                            }
                         } else {
                             Setup.Waiting(lobby, validGames)
                         }
@@ -123,11 +131,15 @@ class GameViewModel @Inject constructor(
     private val _searchResults: MutableStateFlow<List<Movie>> = MutableStateFlow(listOf())
     val searchResults: StateFlow<List<Movie>> = _searchResults
 
-    fun newGame() {
+    fun newGame(movie: Movie? = null) {
         when (val state = uiState.value) {
             is Hinter.Hinting, is Setup.Choosing -> {
                 viewModelScope.launch {
-                    cinenigmaFirestore.startGame(gameId, (state as GameUiState.Playing).games.size + 1, player)
+                    if(movie != null) {
+                        cinenigmaFirestore.startGame(movie, gameId, (state as GameUiState.Playing).games.size + 1, player)
+                    } else {
+                        cinenigmaFirestore.startGame(gameId, (state as GameUiState.Playing).games.size + 1, player)
+                    }
                 }
             }
 
@@ -180,7 +192,7 @@ sealed class GameUiState {
 }
 
 sealed class Setup(lobby: Lobby, games: List<Game>) : GameUiState.Playing(lobby, games) {
-    data class Choosing(override val lobby: Lobby, override val games: List<Game>) :
+    data class Choosing(val options: List<Movie>, override val lobby: Lobby, override val games: List<Game>) :
         Setup(lobby, games)
 
     data class Waiting(override val lobby: Lobby, override val games: List<Game>) :

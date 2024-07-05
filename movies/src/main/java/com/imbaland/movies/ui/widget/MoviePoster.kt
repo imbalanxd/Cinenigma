@@ -1,14 +1,18 @@
 package com.imbaland.movies.ui.widget
 
 import android.graphics.Rect
+import android.graphics.RectF
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.GenericShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.RotateLeft
 import androidx.compose.material3.Icon
@@ -20,9 +24,11 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toAndroidRectF
 import androidx.compose.ui.graphics.toComposeRect
 import androidx.compose.ui.layout.ContentScale
@@ -50,7 +56,7 @@ fun MoviePoster(
     enabled: Boolean = true,
     clipToSelection: Boolean = false,
     rect: Rect? = null,
-    onConfirmed: ((Rect, Float) -> Unit)? = null
+    onSubmit: ((Rect, Float) -> Unit)? = null
 ) {
     TapDrag(
         modifier = modifier,
@@ -72,10 +78,10 @@ fun MoviePoster(
                     textRects.value = it.map { rect -> rect }
                 }
         }
-        if (box != null && onConfirmed != null) {
+        if (box != null && onSubmit != null) {
             IconButton(
                 modifier = Modifier.size(30.dp).zIndex(10f),
-                onClick = { onConfirmed(box.toAndroidRectF().toRect(), 1f) }
+                onClick = { onSubmit(box.toAndroidRectF().toRect(), 1f) }
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_confirm),
@@ -135,6 +141,34 @@ fun MoviePoster(
                 }
             ),
             contentDescription = "contentDescription",
+        )
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+@Composable
+fun MoviePosterHint(modifier: Modifier = Modifier, poster: String, onSubmit: ((Rect, Float) -> Unit)? = null) {
+    MoviePoster(
+        modifier = Modifier.fillMaxWidth(0.7f),
+        imageUrl = poster,
+        clipToSelection = false,
+        onSubmit = onSubmit
+    )
+}
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+@Composable
+fun MoviePosterGuess(modifier: Modifier = Modifier, poster: String, area: RectF) {
+    Box(
+        modifier = Modifier.fillMaxWidth(0.7f)
+            .border(1.5.dp, Color.Blue, RoundedCornerShape(5.dp)),
+        contentAlignment = Alignment.Center
+    ) {
+        MoviePoster(
+            modifier = Modifier.fillMaxWidth(),
+            enabled = false,
+            imageUrl = poster,
+            clipToSelection = true,
+            rect = area.toRect()
         )
     }
 }

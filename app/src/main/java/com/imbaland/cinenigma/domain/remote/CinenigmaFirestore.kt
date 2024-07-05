@@ -8,6 +8,7 @@ import com.imbaland.common.domain.Result
 import com.imbaland.cinenigma.domain.model.Lobby
 import com.imbaland.common.domain.Error
 import com.imbaland.common.domain.auth.AuthenticatedUser
+import com.imbaland.movies.domain.model.Movie
 import kotlinx.coroutines.flow.Flow
 
 interface CinenigmaFirestore {
@@ -24,6 +25,7 @@ interface CinenigmaFirestore {
     suspend fun coordinateLobby(id: String, isHost: Boolean): Result<Unit, Error>
     suspend fun startLobby(id: String): Result<Unit, Error>
     suspend fun startGame(id: String, gameNumber: Int,  hinter: AuthenticatedUser): Result<Unit, Error>
+    suspend fun startGame(movie: Movie, id: String, gameNumber: Int,  hinter: AuthenticatedUser): Result<Unit, Error>
     /**
      * Game Navs
      */

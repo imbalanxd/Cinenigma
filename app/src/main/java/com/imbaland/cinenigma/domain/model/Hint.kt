@@ -1,5 +1,6 @@
 package com.imbaland.cinenigma.domain.model
 
+import android.graphics.RectF
 import com.imbaland.movies.domain.model.Movie
 import com.imbaland.movies.domain.model.Person
 
@@ -98,6 +99,10 @@ sealed class Hint {
         val size: Float = 0f,
         val blurValue: Float = 1f
     ) : Hint()
+
+    fun PosterHint.toRectF(): RectF {
+        return RectF(this.x,this.y,this.x +this.size,this.y +this.size)
+    }
 
     data class KeywordHint(
         val keyword: String = "",

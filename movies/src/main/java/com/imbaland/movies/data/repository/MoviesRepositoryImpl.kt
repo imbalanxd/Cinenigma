@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import kotlin.random.Random
 
 class MoviesRepositoryImpl @Inject constructor(
     private val moviesRemoteService: MoviesRemoteService,
@@ -30,6 +31,17 @@ class MoviesRepositoryImpl @Inject constructor(
             Result.Error(MovieError.NoMoviesFoundError)
         } else {
             Result.Success(result.results)
+        }
+    }
+
+    override suspend fun discoverRandom(count: Int, range: Int): Result<List<Movie>, MovieError> = withContext(dispatcher) {
+        val result = moviesRemoteService.api.discover(Random.nextInt(1, range))
+        if(result.results.isEmpty()) {
+            Result.Error(MovieError.NoMoviesFoundError)
+        } else {
+            val startIndex = Random.nextInt(1, 20-count)
+            val movies = result.results.shuffled().slice(IntRange(startIndex, startIndex + count - 1))
+            Result.Success(movies)
         }
     }
 

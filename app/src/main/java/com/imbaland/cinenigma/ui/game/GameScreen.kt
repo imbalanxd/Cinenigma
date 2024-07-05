@@ -1,18 +1,16 @@
 package com.imbaland.cinenigma.ui.game
 
-import android.graphics.RectF
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -39,21 +37,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.core.graphics.toRect
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -66,16 +59,23 @@ import com.imbaland.cinenigma.R
 import com.imbaland.cinenigma.domain.model.Guess
 import com.imbaland.cinenigma.domain.model.Guess.Holder.poster
 import com.imbaland.cinenigma.domain.model.Hint
+import com.imbaland.cinenigma.domain.model.Hint.EmptyHint.toRectF
 import com.imbaland.cinenigma.domain.model.HintType
 import com.imbaland.cinenigma.domain.model.createDisplay
 import com.imbaland.cinenigma.domain.model.range
 import com.imbaland.cinenigma.domain.model.toType
 import com.imbaland.common.tool.logDebug
+import com.imbaland.common.ui.UrlImage
+import com.imbaland.movies.domain.model.Movie
 import com.imbaland.movies.domain.model.MovieDetails
+import com.imbaland.movies.ui.util.poster
+import com.imbaland.movies.ui.widget.KeywordDisplay
 import com.imbaland.movies.ui.widget.MovieAutoComplete
 import com.imbaland.movies.ui.widget.MovieCast
-import com.imbaland.movies.ui.widget.MoviePoster
-import com.imbaland.movies.ui.widget.TextSelector
+import com.imbaland.movies.ui.widget.MovieCastGuesser
+import com.imbaland.movies.ui.widget.MovieOverview
+import com.imbaland.movies.ui.widget.MoviePosterGuess
+import com.imbaland.movies.ui.widget.MoviePosterHint
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 fun NavGraphBuilder.gameRoute(
@@ -113,14 +113,7 @@ fun GameScreen(
 
             is Setup.Choosing -> {
                 Text(modifier = Modifier.align(Alignment.TopCenter), text = "In Game!")
-                Column(
-                    modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    TextButton(onClick = viewModel::newGame) {
-                        Text(text = "Start Round")
-                    }
-                }
+                MulliganMovie(modifier = Modifier.align(Alignment.Center).fillMaxWidth(), state.options, viewModel::newGame)
             }
 
             is Setup.Waiting -> {
@@ -142,7 +135,9 @@ fun GameScreen(
                     CategorySelection(
                         current = selectedCategory,
                         onClick = { category -> selectedCategory = category },
-                        count = hints?.groupBy { it.toType() }?.mapValues{it.value.size }?:mapOf())
+                        count = hints?.groupBy { it.toType() }?.mapValues { it.value.size }
+                            ?: mapOf()
+                    )
                     when (state) {
                         is Guesser -> {
                             when (state) {
@@ -170,19 +165,19 @@ fun GameScreen(
                                                     ?.map { it.hint() as Hint.KeywordHint }
                                                     ?: listOf()
                                             }
-                                            KeywordHintDisplay(
+                                            KeywordDisplay(
                                                 fullText = state.currentGame.movie?.overview ?: "",
-                                                hints = keywordHints
+                                                keywords = keywordHints.map { it.range }
                                             )
                                         }
 
                                         HintType.Poster -> {
                                             state.currentGame.hints?.findLast { it.hint() is Hint.PosterHint }
                                                 ?.hint()?.let {
-                                                    PosterHintDisplay(
+                                                    MoviePosterGuess(
                                                         poster = state.currentGame.movie?.image
                                                             ?: "",
-                                                        hint = it as Hint.PosterHint
+                                                        area = (it as Hint.PosterHint).toRectF()
                                                     )
                                                 }
                                         }
@@ -193,9 +188,9 @@ fun GameScreen(
                                                     ?.map { it.hint() as Hint.CastMovieHint }
                                                     ?: listOf()
                                             }
-                                            CastMovieHintDisplay(
+                                            MovieCastGuesser(
                                                 modifier = Modifier.fillMaxWidth(1f).height(200.dp),
-                                                hints = castHints
+                                                cast = castHints.createDisplay()
                                             )
                                         }
 
@@ -224,12 +219,9 @@ fun GameScreen(
                                 is Hinter.Hinting -> {
                                     when (selectedCategory) {
                                         HintType.Poster -> {
-                                            MoviePoster(
-                                                modifier = Modifier.fillMaxWidth(0.7f),
-                                                imageUrl = state.currentGame.movie?.image
-                                                    ?: "",
-                                                clipToSelection = false,
-                                                onConfirmed = { rect, blur ->
+                                            MoviePosterHint(modifier = Modifier.fillMaxWidth(0.7f),
+                                                poster = state.currentGame.movie?.image
+                                                    ?: "", onSubmit = { rect, blur ->
                                                     viewModel.submitHint(
                                                         Hint.PosterHint(
                                                             x = rect.left.toFloat(),
@@ -237,85 +229,38 @@ fun GameScreen(
                                                             size = rect.width().toFloat()
                                                         )
                                                     )
-                                                }
-                                            )
+                                                })
                                         }
 
                                         HintType.Keyword -> {
-                                            ConstraintLayout {
-                                                val (submit, selector) = createRefs()
-                                                IconButton(
-                                                    modifier = Modifier.size(30.dp)
-                                                        .constrainAs(submit) {
-                                                            top.linkTo(selector.top)
-                                                            end.linkTo(selector.start)
-                                                        },
-                                                    onClick = {
-                                                        synopsisHint.lastOrNull()?.let {
-                                                            viewModel.submitHint(
-                                                                Hint.KeywordHint(
-                                                                    it.first,
-                                                                    it.second.first.toLong(),
-                                                                    it.second.last.toLong()
-                                                                )
-                                                            )
-                                                        }
-                                                    }
-                                                ) {
-                                                    Icon(
-                                                        painter = painterResource(com.imbaland.movies.R.drawable.ic_confirm),
-                                                        contentDescription = "Localized description"
-                                                    )
+                                            val keywordHints =
+                                                remember(state.currentGame.hints) {
+                                                    state.currentGame.hints?.filter { it.hint() is Hint.KeywordHint }
+                                                        ?.map { it.hint() as Hint.KeywordHint }
+                                                        ?.map { it.range } ?: listOf()
                                                 }
-                                                val keywordHints =
-                                                    remember(state.currentGame.hints) {
-                                                        state.currentGame.hints?.filter { it.hint() is Hint.KeywordHint }
-                                                            ?.map { it.hint() as Hint.KeywordHint }
-                                                            ?.map { it.range } ?: listOf()
-                                                    }
-                                                TextSelector(
-                                                    modifier = Modifier.fillMaxWidth(0.8f)
-                                                        .constrainAs(selector) {
-                                                            top.linkTo(parent.top)
-                                                            start.linkTo(parent.start)
-                                                            end.linkTo(parent.end)
-                                                        },
-                                                    text = state.currentGame.movie?.overview
-                                                        ?: "none lol",
-                                                    style = TextStyle.Default.copy(
-                                                        fontWeight = FontWeight.Medium,
-                                                        lineHeight = 26.sp,
-                                                        fontSize = 16.sp,
-                                                        textAlign = TextAlign.Center
-                                                    ),
-                                                    limit = 1,
-                                                    enabled = true,
-                                                    maxScale = 1.8f,
-                                                    filter = { selection ->
-                                                        state.currentGame.movie?.name?.contains(
-                                                            selection
-                                                        ) != true
-                                                    },
-                                                    selected = keywordHints,
-                                                    onSelected = { range, word, selected ->
-                                                        if (selected)
-                                                            synopsisHint.add(
-                                                                Pair(
-                                                                    word,
-                                                                    range
-                                                                )
+                                            MovieOverview(modifier = Modifier.fillMaxWidth(0.8f),
+                                                fullText = state.currentGame.movie?.overview
+                                                    ?: "none lol", filter = { selection ->
+                                                    state.currentGame.movie?.name?.contains(
+                                                        selection
+                                                    ) != true
+                                                }, keywords = keywordHints, onSubmit = { keywords ->
+                                                    keywords.lastOrNull()?.let {
+                                                        viewModel.submitHint(
+                                                            Hint.KeywordHint(
+                                                                it.first,
+                                                                it.second.first.toLong(),
+                                                                it.second.last.toLong()
                                                             )
-                                                        else
-                                                            synopsisHint.removeIf { pair -> pair.second == range }
-                                                    })
-                                            }
+                                                        )
+                                                    }
+                                                })
                                         }
 
                                         HintType.CastMovie -> {
                                             state.currentGame.movie?.let { movie ->
-                                                MovieCast(modifier = Modifier.fillMaxWidth(
-                                                    1f
-                                                )
+                                                MovieCast(modifier = Modifier.fillMaxWidth(1f)
                                                     .height(200.dp),
                                                     cast = movie.actors,
                                                     onSubmit = { castId, movieId ->
@@ -353,6 +298,22 @@ fun GameScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun MulliganMovie(
+    modifier: Modifier = Modifier,
+    options: List<Movie> = List(3){Movie()},
+    onSelect: (Movie) -> Unit = {_ -> }
+) {
+    Row(modifier = modifier, horizontalArrangement = Arrangement.SpaceBetween) {
+        options.forEach {
+            UrlImage(modifier = Modifier.weight(1f).clickable {
+                onSelect(it)
+            }.poster().padding(10.dp).clip(RoundedCornerShape(5.dp)), url = it.image)
         }
     }
 }
@@ -419,52 +380,6 @@ fun GuessesDisplay(guesses: List<Guess.MovieGuess>) {
     }
 }
 
-@Composable
-fun CastMovieHintDisplay(modifier: Modifier = Modifier, hints: List<Hint.CastMovieHint>) {
-    MovieCast(modifier = modifier, cast = hints.createDisplay())
-}
-
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
-@Composable
-fun PosterHintDisplay(modifier: Modifier = Modifier, poster: String, hint: Hint.PosterHint) {
-    Box(
-        modifier = Modifier.fillMaxWidth(0.7f)
-            .border(1.5.dp, Color.Blue, RoundedCornerShape(5.dp)),
-        contentAlignment = Alignment.Center
-    ) {
-        MoviePoster(
-            modifier = Modifier.fillMaxWidth(),
-            enabled = false,
-            imageUrl = poster,
-            clipToSelection = true,
-            rect = RectF(hint.x, hint.y, hint.x + hint.size, hint.y + hint.size).toRect()
-        )
-    }
-}
-
-@Composable
-fun KeywordHintDisplay(
-    modifier: Modifier = Modifier,
-    fullText: String = "",
-    hints: List<Hint.KeywordHint> = listOf()
-) {
-    TextSelector(
-        modifier = Modifier.fillMaxWidth(0.7f)
-            .border(1.dp, Color.Blue, RoundedCornerShape(4.dp))
-            .padding(3.dp),
-        text = fullText,
-        style = TextStyle.Default.copy(
-            color = Color.Transparent,
-            fontWeight = FontWeight.Medium,
-            fontSize = 10.sp,
-            textAlign = TextAlign.Center
-        ),
-        enabled = false,
-        selected = hints.map { hint -> hint.range },
-        maxScale = 1.8f,
-    )
-}
-
 @Preview
 @Composable
 fun CategorySelection(
@@ -489,7 +404,12 @@ fun CategorySelection(
     ) {
         repeat(categories.size) { index ->
             val category = categories[index]
-            ConstraintLayout(modifier = Modifier.wrapContentSize().background(colorResource(if (category.first == current) R.color.mauve_selected else R.color.mauve), CircleShape)) {
+            ConstraintLayout(
+                modifier = Modifier.wrapContentSize().background(
+                    colorResource(if (category.first == current) R.color.mauve_selected else R.color.mauve),
+                    CircleShape
+                )
+            ) {
                 val (button, counter) = createRefs()
                 IconButton(
                     modifier = Modifier
