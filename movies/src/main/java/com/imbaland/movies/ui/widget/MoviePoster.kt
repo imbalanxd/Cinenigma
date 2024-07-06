@@ -70,7 +70,7 @@ fun MoviePoster(
         }
         val textFinder = remember { TextVisionFinder() }
         var textRects = remember {
-            mutableStateOf(listOf<Rect>())
+            mutableStateOf(listOf<RectF>())
         }
         LaunchedEffect(Unit) {
             textFinder.textBoxFlow
@@ -108,10 +108,10 @@ fun MoviePoster(
                             this.pixelate((box.maxDimension / scaleRatio / 27.0f * if (textRects.value.find { textBox ->
                                     with(dragBox) {
                                         textBox.intersects(
-                                            left.toInt(),
-                                            top.toInt(),
-                                            right.toInt(),
-                                            bottom.toInt()
+                                            left,
+                                            top,
+                                            right,
+                                            bottom
                                         )
                                     }
                                 } != null) 2.5f else 1f).pow(1.12f),

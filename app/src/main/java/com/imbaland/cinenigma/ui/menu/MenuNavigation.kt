@@ -11,6 +11,7 @@ const val MENU_GRAPH = "menu"
 const val LANDING_ROUTE = "landing"
 const val LOBBIES_ROUTE = "lobbies"
 const val SETTINGS_ROUTE = "settings"
+const val DEBUG_ROUTE = "debug"
 /**
  * IN_GAME_ARG_GAME_NAME, IN_GAME_ARG_GAME_ID
  */
@@ -30,6 +31,7 @@ fun NavGraphBuilder.menuNavigationGraph(
         lobbiesRoute(LOBBIES_ROUTE, navigationController)
         lobbyRoute(LOBBY_ROUTE(), navigationController)
         settingsRoute(SETTINGS_ROUTE, navigationController)
+        debugRoute(DEBUG_ROUTE, navigationController)
     }
 
 }
@@ -41,4 +43,7 @@ fun NavController.navigateToLobby(lobby: Lobby? = null) {
 }
 fun NavController.navigateToSettings() {
     navigate(SETTINGS_ROUTE)
+}
+fun NavController.navigateToDebug() {
+    navigate(DEBUG_ROUTE)
 }

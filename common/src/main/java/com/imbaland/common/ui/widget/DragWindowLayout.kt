@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -25,13 +26,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.CacheDrawScope
 import androidx.compose.ui.draw.DrawResult
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.MutableRect
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.toRect
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawStyle
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -66,7 +70,7 @@ fun DragWindowLayout(
         if (enabled) {
             it.pointerInput(Unit) {
                 detectTransformGestures { _, pan, zoom, _ ->
-                    if (enabled && state.isWindowVisible) {
+                    if (state.isWindowVisible) {
                         state.translate(pan.x, pan.y)
                         state.adjustSize(
                             (zoom - 1f) * state.bounds.width / 2f,
@@ -76,13 +80,27 @@ fun DragWindowLayout(
                 }
             }.pointerInput(Unit) {
                 detectTapGestures(onTap = {
-                    if (enabled) {
-                        state.setVisible(!state.isWindowVisible)
-                    }
+                    state.setVisible(!state.isWindowVisible)
                 })
             }
         } else {
             it
+        }.let{ clipping ->
+            if(state.clipToWindow) {
+                clipping.drawWithContent {
+                    val clipActive = state.isWindowVisible && state.clipToWindow
+                    val offset = if(clipActive) Offset(state.window.left, state.window.top) else Offset(0f,0f)
+                    val size = if(clipActive) state.window.size else this.size
+                    drawRect(
+                        topLeft = offset,
+                        size = size,
+                        blendMode = BlendMode.SrcOut,
+                        color = Color.Transparent
+                    )
+                }
+            } else {
+                clipping
+            }
         }
     }.onSizeChanged { newSize ->
         if (enabled) {
@@ -108,10 +126,12 @@ fun DragWindowLayout(
 
 class DragState(
     window: Rect = Rect(0f, 0f, 0f, 0f),
-    isWindowVisible: Boolean = !window.isEmpty
+    isWindowVisible: Boolean = !window.isEmpty,
+    clipToWindow: Boolean = false
 ) {
     internal var bounds: Size = Size(0f, 0f)
     val isWindowVisible: Boolean get() = _isWindowVisible
+    val clipToWindow: Boolean get() = _clipToWindow
 
     private val _window = mutableStateOf(
         Rect(
@@ -122,7 +142,13 @@ class DragState(
         )
     )
     val window by _window
+    val windowNormalized by derivedStateOf {
+        with(_window.value) {
+            Rect(left/bounds.width,top/bounds.height,right/bounds.width,bottom/bounds.height)
+        }
+    }
     private var _isWindowVisible by mutableStateOf(isWindowVisible)
+    private var _clipToWindow by mutableStateOf(clipToWindow)
 
     private fun updateWindow(newWindow: Rect) {
         _window.value = keepRectInside(newWindow)
@@ -133,16 +159,15 @@ class DragState(
         var deltaY = 0f
         var deltaWidth = 0f
         var deltaHeight = 0f
-        if(newWindow.width > bounds.width) {
+        if (newWindow.width > bounds.width) {
             deltaWidth = bounds.width - newWindow.width
-        }
-        else if (newWindow.left < 0f) {
+        } else if (newWindow.left < 0f) {
             deltaX = -newWindow.left
         } else if (newWindow.right > bounds.width) {
             deltaX = bounds.width - newWindow.right
         }
 
-        if(newWindow.height > bounds.height) {
+        if (newWindow.height > bounds.height) {
             deltaHeight = bounds.height - newWindow.height
         }
         if (newWindow.top < 0f) {
@@ -150,11 +175,20 @@ class DragState(
         } else if (newWindow.bottom > bounds.height) {
             deltaY = bounds.height - newWindow.bottom
         }
-        return newWindow.translate(deltaX, deltaY).inflate(deltaWidth.coerceAtLeast(deltaHeight))
+        return newWindow.translate(deltaX, deltaY).let { rect ->
+            rect.copy(
+                right = rect.left + rect.width + deltaWidth,
+                bottom = rect.top + rect.height + deltaHeight
+            )
+        }
     }
 
     fun translate(x: Float, y: Float) {
         updateWindow(window.translate(x, y))
+    }
+
+    fun setWindow(window: Rect) {
+        updateWindow(window)
     }
 
     fun adjustSize(width: Float, height: Float) {
@@ -170,6 +204,10 @@ class DragState(
 
     fun setVisible(visible: Boolean) {
         _isWindowVisible = visible
+    }
+
+    fun clipToWindow(clip: Boolean) {
+        _clipToWindow = clip
     }
 
     private val DEFAULT_WINDOW_SIZE = 0.5f
@@ -215,11 +253,12 @@ class DragState(
 @Composable
 fun rememberDragState(
     initialWindow: Rect = Rect(0f, 0f, 0f, 0f),
-    isWindowVisible: Boolean = initialWindow != null
+    isWindowVisible: Boolean = !initialWindow.isEmpty,
+    clipToWindow: Boolean = false
 ): DragState {
     return rememberSaveable(saver = DragState.Saver) {
         DragState(
-            initialWindow,
+            initialWindow, isWindowVisible, clipToWindow
         )
     }
 }

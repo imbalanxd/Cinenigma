@@ -3,6 +3,7 @@
     <string name="menu_play">Play!</string>
     <string name="menu_lobbies">Lobbies</string>
     <string name="menu_settings">Settings</string>
+    <string name="menu_debug">Debug</string>
     <string name="menu_quit">Quit</string>
     <string name="lobby_joined">Player Joined!</string>
     <string name="lobby_left">Player Left</string>
