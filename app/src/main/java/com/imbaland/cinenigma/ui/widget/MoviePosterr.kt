@@ -64,7 +64,7 @@ fun MoviePosterr(modifier: Modifier = Modifier, posterUrl: String) {
         LaunchedEffect(overlayPainter.state) {
             textFinder.textBoxFlow
                 .collect {
-                    blurGroup = blurGroup.copy(text = it.map { box -> box.toComposeRect() })
+                    blurGroup = blurGroup.copy(text = it.map { box -> box.toComposeRect() }, regen = true)
                 }
         }
         when (val imageState = overlayPainter.state) {
@@ -86,7 +86,8 @@ fun MoviePosterr(modifier: Modifier = Modifier, posterUrl: String) {
                         it.destroy()
                     },
                     update = {
-                        it.addBlurBatch(blurGroup.batch, isNormalized = true)
+                        it.addBlurBatch(blurGroup.batch, isNormalized = true, blurGroup.regen)
+                        blurGroup.regen = false
                     })
             }
 
@@ -100,7 +101,8 @@ fun MoviePosterr(modifier: Modifier = Modifier, posterUrl: String) {
 data class PosterBlurGroup(
     val window: Rect = Rect.Zero,
     val text: List<Rect> = listOf(),
-    val hints: List<Rect> = listOf()
+    val hints: List<Rect> = listOf(),
+    var regen: Boolean = true
 ) {
     val batch: HashMap<String, List<RectF>>
         get() = hashMapOf(

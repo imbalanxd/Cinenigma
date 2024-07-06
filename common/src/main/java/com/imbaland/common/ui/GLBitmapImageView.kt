@@ -42,10 +42,11 @@ class GLBitmapImageView(context: Context):GLSurfaceView(context) {
         }
     }
 
-    fun addBlurBatch(batch: HashMap<String, List<RectF>>, isNormalized: Boolean = false) {
+    fun addBlurBatch(batch: HashMap<String, List<RectF>>, isNormalized: Boolean = false, regen: Boolean = false) {
         batch.keys.forEach { key ->
             blurBoxes[key] = if(!isNormalized) batch[key]!!.map { box -> box.normalize(this.width.toFloat(), this.height.toFloat()) } else batch[key]!!
         }
+        renderer?.regenMask = regen
         requestRender()
     }
 
@@ -62,6 +63,7 @@ class GLBitmapImageView(context: Context):GLSurfaceView(context) {
     }
 
     inner class BitmapRenderer(private val context: Context, private val bitmap: Bitmap) : Renderer {
+        var regenMask = true
         private val coordsPerVertex: Int = 2
         private  val vertexStride: Int = coordsPerVertex * 4
 
@@ -116,7 +118,9 @@ class GLBitmapImageView(context: Context):GLSurfaceView(context) {
             )
         }
         override fun onDrawFrame(gl: GL10?) {
-            createMask()
+            if(regenMask)
+                createMask()
+            regenMask = false
             GLES32.glClear(GLES32.GL_COLOR_BUFFER_BIT)
 
             blurBoxes.values.find { it.isNotEmpty() }?.first()?.let { firstBox ->
@@ -173,7 +177,8 @@ class GLBitmapImageView(context: Context):GLSurfaceView(context) {
             return Math.pow(amount.toDouble(), 1.5).toFloat()//EaseOutQuint.transform(amount)
         }
 
-        private fun createMask() {
+        fun createMask() {
+            logDebug("generating mask")
             //DRAW MASK
             val blurMask = Bitmap.createBitmap(viewBounds.width().toInt()/3, viewBounds.height().toInt()/3, Bitmap.Config.ARGB_8888)
             blurMask.eraseColor(Color.BLACK)
