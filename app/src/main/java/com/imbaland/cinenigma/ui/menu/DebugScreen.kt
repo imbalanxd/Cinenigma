@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -24,7 +25,7 @@ import kotlinx.coroutines.flow.debounce
 
 fun NavGraphBuilder.debugRoute(route: String, navController: NavController) {
     composable(route = route) {
-        DebugScreen(hiltViewModel<DebugViewModel>(remember(it){navController.getBackStackEntry(it.destination.parent!!.route!!)}),)
+        DebugScreen(hiltViewModel<DebugViewModel>(),)
     }
 }
 

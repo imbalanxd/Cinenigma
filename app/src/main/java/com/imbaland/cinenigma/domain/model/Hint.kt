@@ -15,7 +15,8 @@ data class HintRound(
                     data["url"] as String,
                     (data["x"] as Double).toFloat(),
                     (data["y"] as Double).toFloat(),
-                    (data["size"] as Double).toFloat(),
+                    (data["width"] as Double).toFloat(),
+                    (data["height"] as Double).toFloat(),
                     (data["blurValue"] as Double).toFloat()
                 )
             }
@@ -69,7 +70,8 @@ sealed class Hint {
                         "url" to this.url,
                         "x" to this.x,
                         "y" to this.y,
-                        "size" to this.size,
+                        "width" to this.width,
+                        "height" to this.height,
                         "blurValue" to this.blurValue
                     )
                 )
@@ -96,12 +98,13 @@ sealed class Hint {
         val url: String = "",
         val x: Float = 0f,
         val y: Float = 0f,
-        val size: Float = 0f,
+        val width: Float = 0f,
+        val height: Float = 0f,
         val blurValue: Float = 1f
     ) : Hint()
 
     fun PosterHint.toRectF(): RectF {
-        return RectF(this.x,this.y,this.x +this.size,this.y +this.size)
+        return RectF(this.x,this.y,this.x +this.width,this.y +this.height)
     }
 
     data class KeywordHint(

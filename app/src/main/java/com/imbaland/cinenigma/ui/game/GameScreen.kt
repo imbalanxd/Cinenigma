@@ -4,6 +4,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,7 +29,6 @@ import androidx.compose.material.icons.automirrored.filled.RotateLeft
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -46,6 +46,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -64,8 +65,11 @@ import com.imbaland.cinenigma.domain.model.HintType
 import com.imbaland.cinenigma.domain.model.createDisplay
 import com.imbaland.cinenigma.domain.model.range
 import com.imbaland.cinenigma.domain.model.toType
+import com.imbaland.cinenigma.ui.widget.MoviePosterr
 import com.imbaland.common.tool.logDebug
 import com.imbaland.common.ui.UrlImage
+import com.imbaland.common.ui.util.toComposeRect
+import com.imbaland.common.ui.widget.rememberDragState
 import com.imbaland.movies.domain.model.Movie
 import com.imbaland.movies.domain.model.MovieDetails
 import com.imbaland.movies.ui.util.poster
@@ -74,8 +78,6 @@ import com.imbaland.movies.ui.widget.MovieAutoComplete
 import com.imbaland.movies.ui.widget.MovieCast
 import com.imbaland.movies.ui.widget.MovieCastGuesser
 import com.imbaland.movies.ui.widget.MovieOverview
-import com.imbaland.movies.ui.widget.MoviePosterGuess
-import com.imbaland.movies.ui.widget.MoviePosterHint
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 fun NavGraphBuilder.gameRoute(
@@ -172,13 +174,16 @@ fun GameScreen(
                                         }
 
                                         HintType.Poster -> {
-                                            state.currentGame.hints?.findLast { it.hint() is Hint.PosterHint }
-                                                ?.hint()?.let {
-                                                    MoviePosterGuess(
-                                                        poster = state.currentGame.movie?.image
-                                                            ?: "",
-                                                        area = (it as Hint.PosterHint).toRectF()
-                                                    )
+                                            state.currentGame.hints?.filter { it.hint() is Hint.PosterHint }
+                                                ?.map { (it.hint() as Hint.PosterHint).toRectF().toComposeRect() }?.let {
+                                                    Box(
+                                                        modifier = Modifier.fillMaxWidth(0.7f),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        MoviePosterr(posterUrl = state.currentGame.movie?.image
+                                                            ?: "", hints = it, isGuessing = true, enabled = false
+                                                        )
+                                                    }
                                                 }
                                         }
 
@@ -189,7 +194,7 @@ fun GameScreen(
                                                     ?: listOf()
                                             }
                                             MovieCastGuesser(
-                                                modifier = Modifier.fillMaxWidth(1f).height(200.dp),
+                                                modifier = Modifier.fillMaxWidth(0.8f).height(200.dp),
                                                 cast = castHints.createDisplay()
                                             )
                                         }
@@ -219,17 +224,32 @@ fun GameScreen(
                                 is Hinter.Hinting -> {
                                     when (selectedCategory) {
                                         HintType.Poster -> {
-                                            MoviePosterHint(modifier = Modifier.fillMaxWidth(0.7f),
-                                                poster = state.currentGame.movie?.image
-                                                    ?: "", onSubmit = { rect, blur ->
-                                                    viewModel.submitHint(
-                                                        Hint.PosterHint(
-                                                            x = rect.left.toFloat(),
-                                                            y = rect.top.toFloat(),
-                                                            size = rect.width().toFloat()
-                                                        )
+                                            Box() {
+                                                val dragState = rememberDragState(isWindowVisible = true)
+                                                MoviePosterr(modifier = Modifier.fillMaxWidth(0.7f),
+                                                    posterUrl = state.currentGame.movie?.image
+                                                        ?: "", dragState = dragState)
+                                                IconButton(
+                                                    modifier = Modifier.size(30.dp).zIndex(10f),
+                                                    onClick = {
+                                                        with(dragState.windowNormalized) {
+                                                            viewModel.submitHint(
+                                                                Hint.PosterHint(
+                                                                    x = left,
+                                                                    y = top,
+                                                                    width = width,
+                                                                    height = height
+                                                                )
+                                                            )
+                                                        }
+                                                    }
+                                                ) {
+                                                    Icon(
+                                                        painter = painterResource(com.imbaland.movies.R.drawable.ic_confirm),
+                                                        contentDescription = "Localized description"
                                                     )
-                                                })
+                                                }
+                                            }
                                         }
 
                                         HintType.Keyword -> {

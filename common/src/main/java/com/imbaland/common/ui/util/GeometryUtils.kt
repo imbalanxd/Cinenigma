@@ -2,6 +2,7 @@ package com.imbaland.common.ui.util
 
 import android.graphics.RectF
 import androidx.compose.ui.geometry.Rect
+import com.imbaland.common.ui.shader.area
 
 fun RectF.toComposeRect(): Rect {
     return Rect(this.left,this.top,this.right,this.bottom)
@@ -31,4 +32,11 @@ fun List<RectF>.combine(): RectF {
         container = container.combine(box)
     }
     return container
+}
+
+fun List<RectF>.areaSort(): List<RectF> {
+    if(this.isEmpty()) {
+        return this
+    }
+    return this.sortedBy { it.width() }.reversed()
 }
