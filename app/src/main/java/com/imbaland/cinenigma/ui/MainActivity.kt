@@ -3,6 +3,7 @@ package com.imbaland.cinenigma.ui
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
@@ -30,6 +31,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.imbaland.cinenigma.ui.game.gameNavigationGraph
 import com.imbaland.cinenigma.ui.menu.MENU_GRAPH
@@ -87,23 +89,23 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val canPop = remember { mutableStateOf(false) }
 
-                navController.addOnDestinationChangedListener { controller, _, _ ->
+                navController.addOnDestinationChangedListener { controller, destination, _ ->
                     canPop.value = controller.previousBackStackEntry != null
                 }
+
                 Scaffold(topBar = {
                     TopAppBar(
                         modifier = Modifier,
                         title = { /*TODO*/ },
                         navigationIcon = {
                             if (canPop.value) {
-                                IconButton(onClick = { navController.navigateUp() }) {
+                                IconButton(onClick = { navController.popBackStack() }) {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                         contentDescription = "Localized description"
                                     )
                                 }
                             } else {
-                                // Hide the navigation icon when the back stack is empty
                                 Spacer(modifier = Modifier.width(48.dp))
                             }
                         },

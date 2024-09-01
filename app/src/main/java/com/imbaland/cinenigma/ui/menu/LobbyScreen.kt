@@ -1,5 +1,6 @@
 package com.imbaland.cinenigma.ui.menu
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -60,12 +61,12 @@ fun NavGraphBuilder.lobbyRoute(route: String, navController: NavController) {
         )
     ) {
         val menuViewModel =
-            hiltViewModel<MenuViewModel>(remember(it) { navController.getBackStackEntry(it.destination.parent!!.route!!) })
+            hiltViewModel<MenuViewModel>(remember(it) { navController.getBackStackEntry(MENU_GRAPH) })
         LobbyScreen(
             hiltViewModel<LobbyViewModel>(it),
             navController
         ) {
-            menuViewModel.leftLobby()
+            menuViewModel.leaveLobby()
             navController.navigateUp()
         }
     }
@@ -77,6 +78,9 @@ fun LobbyScreen(
     navController: NavController = rememberNavController(),
     leftLobby: () -> Unit
 ) {
+    BackHandler {
+        leftLobby()
+    }
     val uiState: LobbyUiState by viewModel.uiState.collectAsStateWithLifecycle()
     when (val state = uiState) {
         is LobbyUiState.Closing -> {
@@ -154,7 +158,7 @@ fun LobbyScreen(
 
                             }
                         }
-                        TextButton(onClick = viewModel::leaveLobby) {
+                        TextButton(onClick = leftLobby) {
                             Text(text = stringResource(id = R.string.lobby_leave))
                         }
                     }

@@ -29,11 +29,9 @@ fun NavGraphBuilder.menuNavigationGraph(
         startDestination = LANDING_ROUTE) {
         landingRoute(LANDING_ROUTE, navigationController)
         lobbiesRoute(LOBBIES_ROUTE, navigationController)
-        lobbyRoute(LOBBY_ROUTE(), navigationController)
         settingsRoute(SETTINGS_ROUTE, navigationController)
         debugRoute(DEBUG_ROUTE, navigationController)
     }
-
 }
 fun NavController.navigateToLobbies() {
     navigate(LOBBIES_ROUTE)

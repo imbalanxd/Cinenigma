@@ -8,7 +8,9 @@ import com.imbaland.cinenigma.domain.model.Lobby
 import com.imbaland.cinenigma.domain.remote.CinenigmaFirestore
 import com.imbaland.cinenigma.domain.remote.CinenigmaFirestoreError
 import com.imbaland.common.data.auth.firebase.FirebaseUser
+import com.imbaland.common.data.database.firebase.FirestoreFilterGroup
 import com.imbaland.common.data.database.firebase.FirestoreServiceImpl
+import com.imbaland.common.data.database.firebase.FirestoreValueFilter
 import com.imbaland.common.domain.Error
 import com.imbaland.common.domain.Result
 import com.imbaland.common.domain.auth.AuthenticatedUser
@@ -31,10 +33,20 @@ class CinenigmaFirestoreImpl constructor(
     }
 
     override suspend fun watchLobbies(
-        filters: Map<String, Any>,
+        filters: Map<String, Any?>,
         exclude: Pair<String, Any?>?
     ): Flow<Result<List<Lobby>, FirestoreError>> {
         return watchCollection<Lobby>("lobbies", filters = filters, exclude = exclude)
+    }
+
+    override suspend fun watchJoinedLobbies(): Flow<Result<List<Lobby>, FirestoreError>> {
+        return watchCollectionFiltered(
+            "lobbies",
+            FirestoreFilterGroup.OrFilterGroup(
+                FirestoreValueFilter.EqualsFilter("host.id", user?.id),
+                FirestoreValueFilter.EqualsFilter("player.id", user?.id)
+            )
+        )
     }
 
     override suspend fun getLobby(id: String): Result<Lobby, FirestoreError> {
@@ -79,7 +91,8 @@ class CinenigmaFirestoreImpl constructor(
         } ?: return Result.Error(CinenigmaFirestoreError.InvalidUserError)
     }
 
-    override suspend fun leaveLobby(id: String, isHost: Boolean): Result<Unit, Error> {
+    override suspend fun leaveLobby(id: String): Result<Unit, Error> {
+        val isHost = id == user?.id
         user?.let { user ->
             return updateValues(
                 "lobbies", id,

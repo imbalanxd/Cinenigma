@@ -48,36 +48,33 @@ fun NavGraphBuilder.lobbiesRoute(route: String, navController: NavController) {
 @Composable
 internal fun LobbiesScreen(viewModel: MenuViewModel,
                            onLobbyJoined: (Lobby) -> Unit,) {
-    val joinedLobby by viewModel.joinedLobby.collectAsStateWithLifecycle()
-    when(val lobby = joinedLobby) {
-        null -> {
-            val uiState: MenuUiState by viewModel.uiState.collectAsStateWithLifecycle()
-            ConstraintLayout(modifier = Modifier.fillMaxSize()) {
-                when (val state = uiState) {
-                    is MenuUiState.ErrorState -> {
+    val uiState: MenuUiState by viewModel.uiState.collectAsStateWithLifecycle()
+    ConstraintLayout(modifier = Modifier.fillMaxSize()) {
+        when (val state = uiState) {
+            is MenuUiState.ErrorState -> {
 
+            }
+            is MenuUiState.Loaded -> {
+                val (lobbies) = createRefs()
+                LazyColumn(modifier = Modifier
+                    .constrainAs(lobbies) {
+                        top.linkTo(parent.top)
+                        bottom.linkTo(parent.bottom)
+                        start.linkTo(parent.start)
+                        end.linkTo(parent.end)
                     }
-                    is MenuUiState.IdleWithData -> {
-                        val (lobbies) = createRefs()
-                        LazyColumn(modifier = Modifier
-                            .constrainAs(lobbies) {
-                                top.linkTo(parent.top)
-                                bottom.linkTo(parent.bottom)
-                                start.linkTo(parent.start)
-                                end.linkTo(parent.end)
-                            }
-                            .fillMaxWidth(.85f)) {
-                            items(state.lobbies) {
-                                LobbyItem(modifier = Modifier.fillMaxWidth(), lobby = it, viewModel::joinLobby)
-                            }
-                        }
+                    .fillMaxWidth(.85f)) {
+                    items(state.lobbies) {
+                        LobbyItem(modifier = Modifier.fillMaxWidth(), lobby = it, viewModel::joinLobby)
                     }
-                    MenuUiState.Preloading -> CircularProgressIndicator()
                 }
             }
-        }
-        else -> {
-            onLobbyJoined(lobby)
+            is MenuUiState.InLobby -> {
+                onLobbyJoined(state.joinedLobby)
+            }
+            else -> {
+
+            }
         }
     }
 }

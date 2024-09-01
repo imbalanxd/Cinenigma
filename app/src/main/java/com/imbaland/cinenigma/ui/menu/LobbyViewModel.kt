@@ -8,6 +8,7 @@ import com.imbaland.cinenigma.domain.model.LobbyState
 import com.imbaland.cinenigma.domain.model.state
 import com.imbaland.common.domain.Result
 import com.imbaland.cinenigma.domain.remote.CinenigmaFirestore
+import com.imbaland.cinenigma.domain.usecase.LobbyError
 import com.imbaland.common.data.auth.firebase.FirebaseAuthenticator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.GlobalScope
@@ -134,32 +135,9 @@ class LobbyViewModel @Inject constructor(
             }
         }
     }
-    fun leaveLobby() {
-        viewModelScope.launch {
-            when (val state = uiState.value) {
-                is LobbyUiState.Created -> {
-                    when (cinenigmaFirestore.leaveLobby(state.lobby.id, isHost)) {
-                        is Result.Error -> {
-
-                        }
-                        is Result.Success -> {
-                            leavingLobby.value = true
-                        }
-                    }
-                }
-
-                else -> {
-
-                }
-            }
-        }
-    }
 
     override fun onCleared() {
         super.onCleared()
-        GlobalScope.launch {
-            leaveLobby()
-        }
     }
 }
 
@@ -184,9 +162,4 @@ sealed class Host(lobby: Lobby) : LobbyUiState.Created(lobby) {
 sealed class Joiner(lobby: Lobby) : LobbyUiState.Created(lobby) {
     data class Waiting(override val lobby: Lobby) : Host(lobby)
     data class Starting(override val lobby: Lobby) : Host(lobby)
-}
-
-sealed class LobbyError {
-    data object LobbyCreationError : LobbyError()
-    data object LobbyJoiningError : LobbyError()
 }

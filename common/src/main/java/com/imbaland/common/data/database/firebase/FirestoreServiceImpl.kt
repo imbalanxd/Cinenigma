@@ -2,6 +2,7 @@ package com.imbaland.common.data.database.firebase
 
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.Filter
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.SetOptions
@@ -97,17 +98,13 @@ abstract class FirestoreServiceImpl(
         }
 
     suspend inline fun <reified T> watchCollection(collection: String,
-                                                   filters: Map<String, Any> = mapOf(),
-                                                   greaterFilter: Map<String, Any> = mapOf(),
+                                                   filters: Map<String, Any?> = mapOf(),
                                                    exclude: Pair<String, Any?>? = null): Flow<Result<List<T>, FirestoreError>> =
         withContext(dispatcher) {
             callbackFlow {
                 var docRef = db.collection(collection).limit(20)
                 filters.forEach { filter ->
                     docRef = docRef.whereEqualTo(filter.key, filter.value)
-                }
-                filters.forEach { filter ->
-                    docRef = docRef.whereGreaterThan(filter.key, filter.value)
                 }
                 docRef = exclude?.let { docRef.whereNotEqualTo(it.first, it.second) }?:docRef
                 val listener = docRef.addSnapshotListener { result, _ ->
@@ -133,6 +130,33 @@ abstract class FirestoreServiceImpl(
             }
         }
 
+    suspend inline fun <reified T> watchCollectionFiltered(collection: String,
+                                                   filter: FirestoreFilter): Flow<Result<List<T>, FirestoreError>> =
+        withContext(dispatcher) {
+            callbackFlow {
+                var docRef = db.collection(collection).where(filter.build())
+                val listener = docRef.addSnapshotListener { result, _ ->
+                    if (result == null) {
+                        logDebug("Firestore collection stream ($collection) couldn't start")
+                        trySend(Result.Error(FirestoreError.EmptyFirestoreError))
+                    } else {
+                        try {
+                            logDebug("Firestore collection stream ($collection) received" +
+                                    "\n-- Type ${T::class.java}, Size ${result.size()}\n-- Filters ${filter}")
+                            trySend(Result.Success(result.toObjects(T::class.java)))
+                        } catch (e: Throwable) {
+                            logDebug("Firestore collection stream ($collection) received error\n--$e\n--Closing")
+                            trySend(Result.Error(FirestoreError.GeneralFirestoreError))
+                            close(null)
+                        }
+                    }
+                }
+                awaitClose {
+                    logDebug("Firestore collection stream ($collection) closed")
+                    listener.remove()
+                }
+            }
+        }
 
     suspend inline fun <reified T> readCollection(collection: String): Result<List<T>, FirestoreError> =
         withContext(dispatcher) {

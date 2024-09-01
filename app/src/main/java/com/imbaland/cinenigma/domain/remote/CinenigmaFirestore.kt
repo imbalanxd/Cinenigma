@@ -16,12 +16,16 @@ interface CinenigmaFirestore {
      * Menu Navs
      */
     suspend fun getLobbies(): Result<List<Lobby>, FirestoreError>
-    suspend fun watchLobbies(filters: Map<String, Any> = mapOf(), exclude: Pair<String, Any?>? = null): Flow<Result<List<Lobby>, FirestoreError>>
+    suspend fun watchLobbies(filters: Map<String, Any?> = mapOf(), exclude: Pair<String, Any?>? = null): Flow<Result<List<Lobby>, FirestoreError>>
+    /**
+     * Watch all lobbies that user is currently a member of
+     */
+    suspend fun watchJoinedLobbies(): Flow<Result<List<Lobby>, FirestoreError>>
     suspend fun getLobby(id: String): Result<Lobby, FirestoreError>
     suspend fun watchLobby(id: String): Flow<Result<Lobby?, FirestoreError>>
     suspend fun createLobby(title: String): Result<Lobby, FirestoreError>
     suspend fun joinLobby(id: String): Result<Unit, Error>
-    suspend fun leaveLobby(id: String, isHost: Boolean = false): Result<Unit, Error>
+    suspend fun leaveLobby(id: String): Result<Unit, Error>
     suspend fun coordinateLobby(id: String, isHost: Boolean): Result<Unit, Error>
     suspend fun startLobby(id: String): Result<Unit, Error>
     suspend fun startGame(id: String, gameNumber: Int,  hinter: AuthenticatedUser): Result<Unit, Error>

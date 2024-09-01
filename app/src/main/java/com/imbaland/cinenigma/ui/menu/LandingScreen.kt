@@ -50,8 +50,19 @@ import kotlinx.coroutines.flow.sample
 
 fun NavGraphBuilder.landingRoute(route: String, navController: NavController) {
     composable(route = route) {
+        val viewModel = hiltViewModel<MenuViewModel>(remember(it) { navController.getBackStackEntry(it.destination.parent!!.route!!) })
+        val uiState: MenuUiState by viewModel.uiState.collectAsStateWithLifecycle()
+        when(val state = uiState) {
+            is MenuUiState.ErrorState -> {}
+            is MenuUiState.InLobby -> {
+                navController.navigateToLobby(state.joinedLobby)
+            }
+            is MenuUiState.Loaded -> {}
+            MenuUiState.Loading -> {}
+            is MenuUiState.Preloading -> {}
+        }
         LandingScreen(
-            hiltViewModel<MenuViewModel>(remember(it) { navController.getBackStackEntry(it.destination.parent!!.route!!) }),
+            viewModel,
             navController::navigateToLobby,
             navController::navigateToLobbies,
             navController::navigateToSettings,
@@ -70,7 +81,16 @@ fun LandingScreen(
     onQuitClicked: () -> Unit
 ) {
     ConstraintLayout(modifier = Modifier.fillMaxSize()) {
-        val uiState: MenuUiState by viewModel.uiState.collectAsStateWithLifecycle()
+//        val uiState: MenuUiState by viewModel.uiState.collectAsStateWithLifecycle()
+//        when(val state = uiState) {
+//            is MenuUiState.ErrorState -> {}
+//            is MenuUiState.InLobby -> {
+//                onPlayClicked(state.joinedLobby)
+//            }
+//            is MenuUiState.Loaded -> {}
+//            MenuUiState.Loading -> {}
+//            is MenuUiState.Preloading -> {}
+//        }
         val (buttons) = createRefs()
         Column(
             Modifier
@@ -81,7 +101,7 @@ fun LandingScreen(
                     end.linkTo(parent.end)
                 }
                 .fillMaxWidth(.5f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Button(modifier = Modifier.fillMaxWidth(), onClick = { onPlayClicked(null) }) {
+            Button(modifier = Modifier.fillMaxWidth(), onClick = { viewModel.createLobby() }) {
                 Text(text = stringResource(id = R.string.menu_play))
             }
             Button(modifier = Modifier.fillMaxWidth(), onClick = onLobbiesClicked) {

@@ -79,7 +79,6 @@ import com.imbaland.movies.ui.widget.MovieCast
 import com.imbaland.movies.ui.widget.MovieCastGuesser
 import com.imbaland.movies.ui.widget.MovieOverview
 
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 fun NavGraphBuilder.gameRoute(
     route: String,
     navController: NavController
@@ -92,8 +91,6 @@ fun NavGraphBuilder.gameRoute(
     }
 }
 
-//@RequiresApi(Build.VERSION_CODES.TIRAMISU)
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun GameScreen(
     viewModel: GameViewModel

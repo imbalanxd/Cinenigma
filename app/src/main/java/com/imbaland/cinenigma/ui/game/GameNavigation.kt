@@ -5,6 +5,8 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.navigation
 import com.imbaland.cinenigma.ui.menu.IN_GAME_ARG_GAME_ID
 import com.imbaland.cinenigma.ui.menu.IN_GAME_ARG_GAME_NAME
+import com.imbaland.cinenigma.ui.menu.LOBBY_ROUTE
+import com.imbaland.cinenigma.ui.menu.lobbyRoute
 import com.imbaland.common.ui.util.NavRoute
 import com.imbaland.common.ui.util.PathParams
 import com.imbaland.common.ui.util.QueryParams
@@ -27,6 +29,7 @@ fun NavGraphBuilder.gameNavigationGraph(
     navigation(
         route = route,
         startDestination = GAME_ROUTE()) {
+        lobbyRoute(LOBBY_ROUTE(), navigationController)
         gameRoute(GAME_ROUTE(), navigationController)
     }
 }
